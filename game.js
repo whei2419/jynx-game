@@ -407,7 +407,12 @@ function catchItem(jar, item) {
     } else if(item.texture.key === 'goodObject') {
         item.disableBody(true, true);
         goodAnimation.call(this);
-        score++;
+
+        if(score != 18) {
+            score++;
+        }
+
+     
         this.scoreText.setText(score + '/18');
         if (score >= 18) {
             endGame.call(this);
@@ -421,7 +426,10 @@ function catchItem(jar, item) {
 
 function goodAnimation() {
     // Animate the jar: scale up, rotate, and bounce
-    this.collectSound.play();
+    if(score != 18) {
+        this.collectSound.play();
+    }
+
     this.tweens.add({
         targets: this.jar,
         scaleX: 1.05,
