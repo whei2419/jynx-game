@@ -401,9 +401,6 @@ function catchItem(jar, item) {
     if (item.texture.key === 'badObject1' || item.texture.key === 'badObject2' || item.texture.key === 'badObject3') {
         item.disableBody(true, true);
         explosionAnimation.call(this);
-        setTimeout(() => {
-            // endGame.call(this);
-        }, 3000);
     } else if(item.texture.key === 'goodObject') {
         item.disableBody(true, true);
         goodAnimation.call(this);
@@ -414,13 +411,14 @@ function catchItem(jar, item) {
 
      
         this.scoreText.setText(score + '/18');
-        if (score >= 18) {
-            endGame.call(this);
-            return;
-        }
     } else {
         item.disableBody(true, true);
         bombAnimation.call(this);
+    }
+
+    if (score >= 18) {
+        endGame.call(this);
+        return;
     }
 }
 
@@ -470,15 +468,12 @@ function goodAnimation() {
 }
 
 function explosionAnimation() {
-    this.isGameOver = true;
-
-    // Step 1: Move jar up, scale up, and shake (jar wiggle)
     this.tweens.add({
         targets: this.jarContainer,
         y: this.jarContainer.y - 80,
         scaleX: 1.15,
         scaleY: 1.15,
-        duration: 350,
+        duration: 500,
         ease: 'Cubic.easeOut',
         yoyo: false,
         onUpdate: () => {
@@ -488,8 +483,6 @@ function explosionAnimation() {
         onComplete: () => {
             this.jarContainer.angle = 0;
             //hide the jar
-            this.jarContainer.setVisible(false);
-
             // Step 2: Shake the screen and show explosion
             this.cameras.main.shake(400, 0.03);
 
@@ -503,30 +496,20 @@ function explosionAnimation() {
             this.explosionSound.play();
             explosion.play('explosion');
             explosion.on('animationcomplete', () => explosion.destroy());
-
-            // Step 3: Fade out all game elements after a short delay
-            this.time.delayedCall(500, () => {
-                this.tweens.add({
-                    targets: [
-                        this.background,
-                        this.jarContainer,
-                        this.timerBg,
-                        this.timerText,
-                        this.scoreBg,
-                        this.scoreText,
-                        this.vignette
-                    ],
-                    alpha: 0,
-                    duration: 800,
-                    onComplete: () => {
-                        // Optionally, end the game or redirect here
-                        endGame.call(this);
-                    }
-                });
-            });
         }
     });
+
+    //return jar to original position
+    this.tweens.add({
+        targets: this.jarContainer,
+        y: this.cameras.main.height - 250,
+        scaleX: 1,
+        scaleY: 1,
+        duration: 500,
+        ease: 'Cubic.easeOut',
+    });
 }
+
 function bombAnimation() {
     this.wrongItemSound.play();
     this.tweens.add({
@@ -550,6 +533,7 @@ function bombAnimation() {
 }
 
 function endGame() {
+    if(this.isGameOver) return;
     if(score == 18) {
         this.winSound.play();
         this.winSound.volume = 0.5;

@@ -59,6 +59,7 @@
 
             // Start the hover timer when hovering over the button
             startButton.addEventListener('mouseover', function () {
+                const completeSound = new Audio('assets/SOUNDTRACK/completed.mp3');
                 hoverTimer = setTimeout(function () {
                     window.location.href = `game.html?lang=${selectedLang}`;
                 }, 1000); // 3 seconds
