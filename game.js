@@ -46,6 +46,7 @@ function preload() {
     this.load.audio('countDown', 'assets/SOUNDTRACK/countdownsound.mp3');
     this.load.audio('bg-sound', 'assets/SOUNDTRACK/bg.mp3');
     this.load.audio('wrongitem', 'assets/SOUNDTRACK/wrong item.mp3');
+    this.load.audio('buzzer', 'assets/SOUNDTRACK/long-buzzer.mp3');
 
     this.load.image('backgroundEn', 'assets/bg.png');
     this.load.image('backgroundCh', 'assets/bgCh.png');
@@ -104,6 +105,7 @@ function create() {
     this.countdownSound = this.sound.add('countDown');
     this.wrongItemSound = this.sound.add('wrongitem');
     this.bgSound = this.sound.add('bg-sound', { loop: true });
+    this.buzzerSound = this.sound.add('buzzer', { loop: false });
  
     this.countdownSound.play();
 
@@ -236,10 +238,12 @@ function create() {
 
     // Define startGame as a scene method
     this.startGame = function() {
+        this.countdownSound.stop();
+        this.buzzerSound.play();
         // Add a 2 second delay before starting the timers
         this.time.delayedCall(2000, () => {
             //play bg music
-            this.countdownSound.stop();
+            this.buzzerSound.stop();
             this.bgSound.play();
             // Animate timerBg and scoreBg (pop-in scale and fade-in)
             this.timerBg.setScale(0.7).setAlpha(0);
