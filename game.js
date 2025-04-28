@@ -107,6 +107,14 @@ function create() {
     this.physics.world.enable(this.jarContainer);
     this.jarContainer.body.setCollideWorldBounds(true);
  
+    this.goodObjectDropRate = 0.5; // Start with 50% chance for good object
+    this.spawnDelay = 1200; // Initial spawn delay (ms)
+    this.dropGravity = 300; // Initial gravity for falling items
+    this.spawnAcceleration = 0.98; // How much to multiply spawnDelay each interval (slower acceleration)
+    this.gravityAcceleration = 1.03; // How much to multiply dropGravity each interval (slower acceleration)
+    this.minSpawnDelay = 600; // Minimum spawn delay (slower minimum)
+    this.maxDropGravity = 900; // Maximum gravity (slower max)
+    this.isGameOver = false; // Track game over state
 
     // Create a physics group for falling items
     this.items = this.physics.add.group();
@@ -209,17 +217,17 @@ function create() {
                 targets: this.timerBg,
                 scale: 1,
                 alpha: 0.92,
-                duration: 400,
+                duration: 100,
                 ease: 'Back.Out',
-                delay: 200 // slight delay for effect
+                delay: 50 // slight delay for effect
             });
             this.tweens.add({
                 targets: this.scoreBg,
                 scale: 1,
                 alpha: 0.92,
-                duration: 400,
+                duration: 100,
                 ease: 'Back.Out',
-                delay: 400 // stagger for effect
+                delay:  150// stagger for effect
             });
             // Animate timerText and scoreText (fade-in and slight upward move)
             this.timerText.setAlpha(0).setY(80);
@@ -228,17 +236,17 @@ function create() {
                 targets: this.timerText,
                 alpha: 1,
                 y: 280,
-                duration: 350,
+                duration: 100,
                 ease: 'Quad.Out',
-                delay: 350
+                delay: 50
             });
             this.tweens.add({
                 targets: this.scoreText,
                 alpha: 1,
                 y: 280,
-                duration: 350,
+                duration: 100,
                 ease: 'Quad.Out',
-                delay: 550
+                delay: 150
             });
             this.timerBg.setVisible(true);
             this.timerText.setVisible(true);
@@ -257,6 +265,9 @@ function create() {
                 loop: true
             });
         });
+        this.goodObjectDropRate = 0.7;
+        this.spawnDelay = 1000;
+        this.dropGravity = 300;
     }.bind(this);
 
     // Define spawnItem and updateTimer as scene methods for callbackScope
@@ -288,27 +299,42 @@ function update() {
 }
 
 function spawnItem() {
-    var allItems = [
-        // Make goodObject more frequent by adding it multiple times
-        { key: 'goodObject', isGood: true },
-        { key: 'goodObject', isGood: true },
-        { key: 'goodObject', isGood: true },
-        { key: 'badObject1', isGood: false },
-        { key: 'badObject2', isGood: false },
-        { key: 'badObject3', isGood: false },
-        { key: 'badObject4', isGood: false },
-        { key: 'badObject5', isGood: false }
-    ];
+    if (this.isGameOver) return; // Prevent spawning after game ends
+    // Increase good object drop rate
+    this.goodObjectDropRate = Math.min(0.8, this.goodObjectDropRate + 0.005); // up to 80%
+    // Adjust spawn delay and drop gravity over time
+    this.spawnDelay = Math.max(this.minSpawnDelay, this.spawnDelay * this.spawnAcceleration);
+    this.dropGravity = Math.min(this.maxDropGravity, this.dropGravity * this.gravityAcceleration);
+    if (this.spawnItemEvent) {
+        this.spawnItemEvent.remove();
+    }
+    this.spawnItemEvent = this.time.addEvent({
+        delay: this.spawnDelay,
+        callback: this.spawnItem,
+        callbackScope: this,
+        loop: false
+    });
 
+    // Weighted random for good/bad object
+    var isGood = Math.random() < this.goodObjectDropRate;
+    var allItems = isGood
+        ? [{ key: 'goodObject', isGood: true }]
+        : [
+            { key: 'badObject1', isGood: false },
+            { key: 'badObject2', isGood: false },
+            { key: 'badObject3', isGood: false },
+            { key: 'badObject4', isGood: false },
+            { key: 'badObject5', isGood: false }
+        ];
     var randomItem = Phaser.Math.RND.pick(allItems);
     var x = Phaser.Math.Between(0, this.cameras.main.width);
     var y = -100;
     var item = this.items.create(x, y, randomItem.key);
     item.isGood = randomItem.isGood;
     item.setOrigin(0.5);
-    item.setScale(0.6); // Scale each item individually
+    item.setScale(0.6);
     item.body.setAllowGravity(true);
-    item.body.gravity.y = 300;
+    item.body.gravity.y = this.dropGravity;
     item.body.velocity.x = Phaser.Math.Between(-30, 30);
     item.setData('outOfBoundsKill', true);
 }
@@ -323,6 +349,7 @@ function updateTimer() {
 }
 
 function catchItem(jar, item) {
+    if (this.isGameOver) return; // Prevent interaction after game ends
     if (item.texture.key === 'badObject1' || item.texture.key === 'badObject2' || item.texture.key === 'badObject3') {
         item.disableBody(true, true);
         explosionAnimation.call(this);
@@ -334,6 +361,10 @@ function catchItem(jar, item) {
         goodAnimation.call(this);
         score++;
         this.scoreText.setText(score + '/18');
+        if (score >= 18) {
+            endGame.call(this);
+            return;
+        }
     } else {
         item.disableBody(true, true);
         bombAnimation.call(this);
@@ -408,6 +439,10 @@ function bombAnimation() {
 }
 
 function endGame() {
+    if (this.isGameOver) return;
+    this.isGameOver = true;
+    // Prevent further interaction
+    this.input.enabled = false;
     this.game.pause();
     window.location.href = `finish.html?score=${score}&lang=${lang}`;
 }
