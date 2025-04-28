@@ -30,35 +30,52 @@
         .start-button:hover {
             opacity: 0.8;
         }
+
+        #score {
+            font-size: 136px;
+            color: #FFA000;
+            position: absolute;
+            top: 710px;
+            left: 51%;
+            transform: translateX(-50%);
+        }
     </style>
 
     <script>
-        let selectedLang = 'english'; // default
         let hoverTimer = null;
+        let selectedLang = ''; // default
 
         window.onload = function () {
             const params = new URLSearchParams(window.location.search);
             const lang = params.get('lang');
+            const score = params.get('score');
 
             const body = document.body;
             const startButton = document.getElementById('startButton');
+            const scoreDisplay = document.getElementById('score');
+
+            console.log(`Score: ${score}`);
 
             if (lang === 'chinese') {
-                body.style.backgroundImage = "url('assets/startcn.png')";
-                startButton.innerText = "开始";
+                body.style.backgroundImage = "url('assets/ch-end.png')";
+                startButton.innerText = "结束";
                 selectedLang = 'chinese';
+                scoreDisplay.innerText = score;
             } else {
-                body.style.backgroundImage = "url('assets/startbg.png')";
-                startButton.innerText = "Start";
+                body.style.backgroundImage = "url('assets/en-end.png')";
+                startButton.innerText = "Finish";
                 selectedLang = 'english';
+                scoreDisplay.innerText = score;
             }
 
+            // Start the hover timer when hovering over the button
             startButton.addEventListener('mouseover', function () {
                 hoverTimer = setTimeout(function () {
-                    window.location.href = `instruction.html?lang=${selectedLang}`;
-                }, 1000);
+                    window.location.href = `index.html?lang=${selectedLang}`;
+                }, 1000); // 3 seconds
             });
 
+            // Cancel hover timer when mouse leaves the button
             startButton.addEventListener('mouseout', function () {
                 clearTimeout(hoverTimer);
             });
@@ -67,6 +84,7 @@
 </head>
 
 <body>
+    <p id="score"></p>
     <div class="buttoncontainer">
         <button id="startButton" class="start-button">Start</button>
     </div>

@@ -25,6 +25,10 @@
             width: 315px;
             height: 100px;
             border-radius: 70px;
+            position: absolute;
+            bottom: 172px;
+            left: 50%;
+            transform: translateX(-50%);
         }
 
         .start-button:hover {
@@ -33,8 +37,8 @@
     </style>
 
     <script>
-        let selectedLang = 'english'; // default
         let hoverTimer = null;
+        let selectedLang = 'english'; // default
 
         window.onload = function () {
             const params = new URLSearchParams(window.location.search);
@@ -44,21 +48,23 @@
             const startButton = document.getElementById('startButton');
 
             if (lang === 'chinese') {
-                body.style.backgroundImage = "url('assets/startcn.png')";
+                body.style.backgroundImage = "url('assets/ch-end.png')";
                 startButton.innerText = "开始";
                 selectedLang = 'chinese';
             } else {
-                body.style.backgroundImage = "url('assets/startbg.png')";
+                body.style.backgroundImage = "url('assets/en-bg.png')";
                 startButton.innerText = "Start";
                 selectedLang = 'english';
             }
 
+            // Start the hover timer when hovering over the button
             startButton.addEventListener('mouseover', function () {
                 hoverTimer = setTimeout(function () {
-                    window.location.href = `instruction.html?lang=${selectedLang}`;
-                }, 1000);
+                    window.location.href = `game.html?lang=${selectedLang}`;
+                }, 1000); // 3 seconds
             });
 
+            // Cancel hover timer when mouse leaves the button
             startButton.addEventListener('mouseout', function () {
                 clearTimeout(hoverTimer);
             });
@@ -67,9 +73,7 @@
 </head>
 
 <body>
-    <div class="buttoncontainer">
-        <button id="startButton" class="start-button">Start</button>
-    </div>
+    <button id="startButton" class="start-button">Start</button>
 </body>
 
 </html>

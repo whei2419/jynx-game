@@ -11,7 +11,7 @@ var config = {
     width: window.innerWidth,
     height: window.innerHeight,
     parent: 'gameContainer',
-    physics: {                // <-- Add this block
+    physics: {
         default: 'arcade',
         arcade: {
             gravity: { y: 0 },
@@ -33,16 +33,17 @@ var score = 0;
 var countdownText;
 var timerText;
 var scoreText;
-var items;
-var jar;
-var cursors;
-var explosion;
-var spawnItemEvent;
-var gameTimerEvent;
+
+const params = new URLSearchParams(window.location.search);
+const lang = params.get('lang');
 
 function preload() {
-    this.load.image('background', 'assets/bg.png');
-    this.load.image('jar', 'assets/jar.png');
+    this.load.image('backgroundEn', 'assets/bg.png');
+    this.load.image('backgroundCh', 'assets/bgCh.png');
+    this.load.image('jar1', 'assets/jar1.png');
+    this.load.image('jar2', 'assets/jar2.png');
+    this.load.image('jar3', 'assets/jar3.png');
+    this.load.image('jar4', 'assets/jar4.png');
     this.load.image('goodObject', 'assets/6.png');
     this.load.image('badObject1', 'assets/1.png'); // feather
     this.load.image('badObject2', 'assets/2.png'); // feather
@@ -50,52 +51,123 @@ function preload() {
     this.load.image('badObject4', 'assets/4.png');
     this.load.image('badObject5', 'assets/5.png');
     this.load.image('vignette', 'assets/vignette.png');
-    this.load.spritesheet('explosion', 'assets/explosion_spritesheet.png', { frameWidth: 1030, frameHeight: 1080 });
-    this.load.image('jarGlow', 'assets/glow.png'); // Add your glow image to assets folder
+    this.load.image('explosionspritesheet', 'assets/explosionspritesheet.png'); 
+    this.load.image('glow', 'assets/glow.png'); // Placeholder for liquid image
+    this.load.image('water-1', 'assets/water-1.png');
+    this.load.image('jar0', 'assets/jar0.png');
+    this.load.image('jar1', 'assets/jar1.png');
+    this.load.image('jar2', 'assets/jar2.png');
+    this.load.image('jar3', 'assets/jar3.png');
+    this.load.image('jar4', 'assets/jar4.png');
+    this.load.image('jar5', 'assets/jar5.png');
+    this.load.image('jar6', 'assets/jar6.png');
+    this.load.image('jar7', 'assets/jar7.png');
+    this.load.image('jar8', 'assets/jar8.png');
+    this.load.image('jar9', 'assets/jar9.png');
+    this.load.image('jar10', 'assets/jar10.png');
+    this.load.image('jar11', 'assets/jar11.png');
+    this.load.image('jar12', 'assets/jar12.png');
+    this.load.image('jar13', 'assets/jar13.png');
+    this.load.image('jar14', 'assets/jar14.png');
+    this.load.image('jar15', 'assets/jar15.png');
+    this.load.image('jar16', 'assets/jar16.png');
+    this.load.image('jar17', 'assets/jar17.png');
+    this.load.image('countdown', 'assets/countdown.png');
+    this.load.image('clock', 'assets/clock.png');
 }
 
 function create() {
     // Set the bounds of the world
     this.physics.world.setBounds(0, 0, this.cameras.main.width, this.cameras.main.height);
 
-    // Create explosion animation
-    this.anims.create({
-        key: 'explode',
-        frames: this.anims.generateFrameNumbers('explosion', { start: 0, end: 22 }),
-        frameRate: 15,
-        repeat: 0 // Only play once
-    });
-
     // Set up background and make it stretch to game dimensions
-    this.background = this.add.sprite(0, 0, 'background').setOrigin(0, 0);
+
+    if (lang === 'chinese') {
+        this.background = this.add.image(0, 0, 'backgroundCh').setOrigin(0, 0);
+    } else {
+        this.background = this.add.image(0, 0, 'backgroundEn').setOrigin(0, 0);
+    }
     this.background.displayWidth = this.cameras.main.width;
     this.background.displayHeight = this.cameras.main.height;
 
     // Set up jar and enable physics
-    this.jar = this.physics.add.sprite(this.cameras.main.centerX, this.cameras.main.height - 80, 'jar').setOrigin(0.5);
+    this.jarImages = [
+        'jar0', 'jar1', 'jar2', 'jar3', 'jar4', 'jar5', 'jar6', 'jar7', 'jar8', 'jar9',
+        'jar10', 'jar11', 'jar12', 'jar13', 'jar14', 'jar15', 'jar16', 'jar17'
+    ];
+    this.jarLevel = 0; // 0 to (this.jarImages.length - 1)
+    this.jar = this.add.sprite(0, 0, this.jarImages[this.jarLevel]).setOrigin(0.5);
     this.jar.setScale(0.8);
-    this.jar.setCollideWorldBounds(true);
+    const jarWidth = this.jar.displayWidth;
+    const jarHeight = this.jar.displayHeight;
 
-    // Add jar glow overlay, initially invisible
-    this.jarGlow = this.add.image(this.jar.x, this.jar.y, 'jarGlow')
-        .setOrigin(0.5)
-        .setScale(0.9)
-        .setAlpha(0)
-        .setDepth(11);
+    // Create a container to hold the jar
+    this.jarContainer = this.add.container(this.cameras.main.centerX, this.cameras.main.height - 250, [this.jar]);
+    this.jarContainer.setSize(jarWidth, jarHeight);
+    this.physics.world.enable(this.jarContainer);
+    this.jarContainer.body.setCollideWorldBounds(true);
+ 
 
     // Create a physics group for falling items
     this.items = this.physics.add.group();
 
-    // Initialize the timer and score display
-    this.timerText = this.add.text(20, 20, 'Time: 30', { font: "24px Arial", fill: "#ffffff" });
-    this.scoreText = this.add.text(this.cameras.main.width - 150, 20, 'Score: 0', { font: "24px Arial", fill: "#ffffff" });
+    // Timer and score backgrounds and text, moved slightly inward for better appearance
+    this.timerBg = this.add.image(200, 280, 'clock')
+        .setOrigin(0.5)
+        .setAlpha(0.92)
+        .setDepth(99)
+        .setVisible(false);
+    this.timerText = this.add.text(200, 280, '0:30', {
+        font: "bold 45px Arial Black, Arial, sans-serif",
+        fill: "#C88D43",
+        align: 'center',
+    }).setOrigin(0.5).setDepth(100).setVisible(false);
+    this.scoreBg = this.add.image(this.cameras.main.width - 200, 280, 'clock')
+        .setOrigin(0.5)
+        .setAlpha(0.92)
+        .setDepth(99)
+        .setVisible(false);
+    this.scoreText = this.add.text(this.cameras.main.width - 200, 280, '0/18', {
+        font: "bold 45px Arial Black, Arial, sans-serif",
+        fill: "#C88D43",
+        align: 'center',
+    }).setOrigin(0.5).setDepth(100).setVisible(false);
 
     // Countdown text in the center
     this.countdownNumber = 3;
+    // Add overlay for countdown with fade-in animation
+    this.countdownOverlay = this.add.rectangle(
+        this.cameras.main.centerX,
+        this.cameras.main.centerY,
+        this.cameras.main.width,
+        this.cameras.main.height,
+        0xffffff,
+        0.6
+    ).setDepth(999).setAlpha(0);
+    this.tweens.add({
+        targets: this.countdownOverlay,
+        alpha: 1,
+        duration: 500,
+        ease: 'Quad.easeIn'
+    });
+    // Add background image for countdown timer with scale pop-in animation
+    this.countdownBg = this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, 'countdown')
+        .setOrigin(0.5)
+        .setDepth(1000)
+        .setDisplaySize(480, 320)
+        .setAlpha(0.95)
+        .setScale(0.7);
+    this.tweens.add({
+        targets: this.countdownBg,
+        scale: 1,
+        duration: 400,
+        ease: 'Back.Out'
+    });
+    // Countdown text styled and above background
     this.countdownText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, '3', {
-        font: "80px Arial",
-        fill: "#FFA500"
-    }).setOrigin(0.5);
+        font: "bold 120px Arial Black, Arial, sans-serif",
+        fill: "#FFA000",
+    }).setOrigin(0.5).setDepth(1001);
 
     // Add vignette overlay, initially invisible
     this.vignette = this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, 'vignette')
@@ -111,6 +183,16 @@ function create() {
             this.countdownText.setText(this.countdownNumber);
         } else {
             this.countdownText.setText('');
+            // Animate overlay and background out
+            this.tweens.add({
+                targets: [this.countdownOverlay, this.countdownBg],
+                alpha: 0,
+                duration: 400,
+                onComplete: () => {
+                    this.countdownOverlay.setVisible(false);
+                    this.countdownBg.setVisible(false);
+                }
+            });
             this.countdownEvent.remove();
             this.startGame();
         }
@@ -118,17 +200,62 @@ function create() {
 
     // Define startGame as a scene method
     this.startGame = function() {
-        this.spawnItemEvent = this.time.addEvent({
-            delay: 1000,
-            callback: this.spawnItem,
-            callbackScope: this,
-            loop: true
-        });
-        this.gameTimerEvent = this.time.addEvent({
-            delay: 1000,
-            callback: this.updateTimer,
-            callbackScope: this,
-            loop: true
+        // Add a 2 second delay before starting the timers
+        this.time.delayedCall(2000, () => {
+            // Animate timerBg and scoreBg (pop-in scale and fade-in)
+            this.timerBg.setScale(0.7).setAlpha(0);
+            this.scoreBg.setScale(0.7).setAlpha(0);
+            this.tweens.add({
+                targets: this.timerBg,
+                scale: 1,
+                alpha: 0.92,
+                duration: 400,
+                ease: 'Back.Out',
+                delay: 200 // slight delay for effect
+            });
+            this.tweens.add({
+                targets: this.scoreBg,
+                scale: 1,
+                alpha: 0.92,
+                duration: 400,
+                ease: 'Back.Out',
+                delay: 400 // stagger for effect
+            });
+            // Animate timerText and scoreText (fade-in and slight upward move)
+            this.timerText.setAlpha(0).setY(80);
+            this.scoreText.setAlpha(0).setY(80);
+            this.tweens.add({
+                targets: this.timerText,
+                alpha: 1,
+                y: 280,
+                duration: 350,
+                ease: 'Quad.Out',
+                delay: 350
+            });
+            this.tweens.add({
+                targets: this.scoreText,
+                alpha: 1,
+                y: 280,
+                duration: 350,
+                ease: 'Quad.Out',
+                delay: 550
+            });
+            this.timerBg.setVisible(true);
+            this.timerText.setVisible(true);
+            this.scoreBg.setVisible(true);
+            this.scoreText.setVisible(true);
+            this.spawnItemEvent = this.time.addEvent({
+                delay: 1000,
+                callback: this.spawnItem,
+                callbackScope: this,
+                loop: true
+            });
+            this.gameTimerEvent = this.time.addEvent({
+                delay: 1000,
+                callback: this.updateTimer,
+                callbackScope: this,
+                loop: true
+            });
         });
     }.bind(this);
 
@@ -143,33 +270,28 @@ function create() {
         loop: true
     });
 
-    // Setup the cursor keys for movement
-    this.cursors = this.input.keyboard.createCursorKeys();
+    // Add mouse movement listener for left/right movement
+    this.input.on('pointermove', (pointer) => {
+        // Only allow movement if countdown is finished
+        if (!this.countdownEvent || this.countdownNumber <= 0) {
+            this.jarContainer.x = Phaser.Math.Clamp(pointer.x, this.jarContainer.width / 2, this.cameras.main.width - this.jarContainer.width / 2);
+        }
+    });
 
     // Resize the game when the window is resized
     window.addEventListener('resize', () => this.resizeGame());
 }
 
 function update() {
-    // Handle jar movement based on cursor keys
-    if (this.cursors.left.isDown) {
-        this.jar.x -= 5;
-    } else if (this.cursors.right.isDown) {
-        this.jar.x += 5;
-    }
-
-    // Make sure the glow follows the jar
-    if (this.jarGlow) {
-        this.jarGlow.x = this.jar.x;
-        this.jarGlow.y = this.jar.y;
-    }
-
-    // Check for overlap (catch items)
-    this.physics.overlap(this.jar, this.items, catchItem, null, this);
+    // Still check for overlap
+    this.physics.overlap(this.jarContainer, this.items, catchItem, null, this);
 }
 
 function spawnItem() {
     var allItems = [
+        // Make goodObject more frequent by adding it multiple times
+        { key: 'goodObject', isGood: true },
+        { key: 'goodObject', isGood: true },
         { key: 'goodObject', isGood: true },
         { key: 'badObject1', isGood: false },
         { key: 'badObject2', isGood: false },
@@ -193,11 +315,9 @@ function spawnItem() {
 
 function updateTimer() {
     timer--;
-    this.timerText.setText('Time: ' + timer);
+    this.timerText.setText(`0:${timer < 10 ? '0' : ''}${timer}`);
 
     if (timer <= 0) {
-        this.time.removeEvent(spawnItemEvent);
-        this.time.removeEvent(gameTimerEvent);
         endGame.call(this);
     }
 }
@@ -212,46 +332,58 @@ function catchItem(jar, item) {
     } else if(item.texture.key === 'goodObject') {
         item.disableBody(true, true);
         goodAnimation.call(this);
+        score++;
+        this.scoreText.setText(score + '/18');
     } else {
         item.disableBody(true, true);
         bombAnimation.call(this);
     }
-    score++;
-    this.scoreText.setText('Score: ' + score);
 }
 
 function goodAnimation() {
-    // Fade in jar and glow together
-    this.jar.setAlpha(0);
-    this.jarGlow.setAlpha(0);
+    // Animate the jar: scale up, rotate, and bounce
     this.tweens.add({
-        targets: [this.jar, this.jarGlow],
-        alpha: 1,
-        duration: 200,
-        onComplete: () => {
-            this.tweens.add({
-                targets: [this.jar, this.jarGlow],
-                alpha: 0,
-                duration: 200,
-                hold: 200,
-                yoyo: true,
-                onYoyo: () => {
-                    this.jar.setAlpha(1);
-                    this.jarGlow.setAlpha(0);
-                }
-            });
+        targets: this.jar,
+        scaleX: 1.05,
+        scaleY: 1.05,
+        angle: 10,
+        duration: 120,
+        ease: 'Cubic.easeOut',
+        yoyo: true,
+        hold: 80,
+        onYoyo: () => {
+            this.jar.setAngle(0);
         }
     });
+
+    // Animate the jarContainer: quick upward jump and bounce
+    this.tweens.add({
+        targets: this.jarContainer,
+        y: this.jarContainer.y - 30,
+        duration: 100,
+        ease: 'Quad.easeOut',
+        yoyo: true,
+        hold: 60
+    });
+
+    // Add a quick white flash overlay for feedback
+    const flash = this.add.rectangle(this.cameras.main.centerX, this.cameras.main.centerY, this.cameras.main.width, this.cameras.main.height, 0xffffff, 0.18)
+        .setDepth(2000);
+    this.tweens.add({
+        targets: flash,
+        alpha: 0,
+        duration: 180,
+        onComplete: () => flash.destroy()
+    });
+
+    // Increase jar level and update image
+    this.jarLevel = Math.min(this.jarLevel + 1, this.jarImages.length - 1);
+    this.jar.setTexture(this.jarImages[this.jarLevel]);
 }
 
 function explosionAnimation() {
     this.cameras.main.shake(300, 0.02);
     this.cameras.main.flash(300, 255, 0, 0);
-    this.explosion = this.add.sprite(this.jar.x, this.jar.y, 'explosion').setOrigin(0.5);
-    this.explosion.play('explode');
-    this.explosion.on('animationcomplete', () => {
-        this.explosion.destroy();
-    });
 }
 
 function bombAnimation() {
@@ -276,8 +408,8 @@ function bombAnimation() {
 }
 
 function endGame() {
-    alert("Game Over! Your score: " + score);
-    this.scene.restart();
+    this.game.pause();
+    window.location.href = `finish.html?score=${score}&lang=${lang}`;
 }
 
 function resizeGame() {
