@@ -37,6 +37,7 @@
 
     <script>
         let selectedLang = 'english'; // default
+        let hoverTimer = null;
 
         window.onload = function () {
             const params = new URLSearchParams(window.location.search);
@@ -55,8 +56,14 @@
                 selectedLang = 'english';
             }
 
-            startButton.addEventListener('click', function () {
-                window.location.href = `instruction.html?lang=${selectedLang}`;
+            startButton.addEventListener('mouseover', function () {
+                hoverTimer = setTimeout(function () {
+                    window.location.href = `instruction.html?lang=${selectedLang}`;
+                }, 3000); // 3 seconds hover
+            });
+
+            startButton.addEventListener('mouseout', function () {
+                clearTimeout(hoverTimer);
             });
         }
     </script>

@@ -46,16 +46,25 @@
     </style>
 
     <script>
-        function selectLanguage(lang) {
-            window.location.href = `start.html?lang=${lang}`;
+        let hoverTimer = null;
+
+        function startHover(lang) {
+            hoverTimer = setTimeout(function () {
+                window.location.href = `start.html?lang=${lang}`;
+            }, 2000); // 3 seconds
+        }
+
+        function cancelHover() {
+            clearTimeout(hoverTimer);
         }
     </script>
 </head>
 
 <body>
     <div class="buttons-container">
-        <button class="button" onclick="selectLanguage('chinese')">中文</button>
-        <button class="button" onclick="selectLanguage('english')">English</button>
+        <button class="button" onmouseover="startHover('chinese')" onmouseout="cancelHover()">中文</button>
+
+        <button class="button" onmouseover="startHover('english')" onmouseout="cancelHover()">English</button>
     </div>
 </body>
 

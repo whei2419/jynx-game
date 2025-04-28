@@ -36,6 +36,7 @@
     </style>
 
     <script>
+        let hoverTimer = null;
         let selectedLang = 'english'; // default
 
         window.onload = function () {
@@ -55,8 +56,16 @@
                 selectedLang = 'english';
             }
 
-            startButton.addEventListener('click', function () {
-                window.location.href = `index.html?lang=${selectedLang}`;
+            // Start the hover timer when hovering over the button
+            startButton.addEventListener('mouseover', function () {
+                hoverTimer = setTimeout(function () {
+                    window.location.href = `index.html?lang=${selectedLang}`;
+                }, 3000); // 3 seconds
+            });
+
+            // Cancel hover timer when mouse leaves the button
+            startButton.addEventListener('mouseout', function () {
+                clearTimeout(hoverTimer);
             });
         }
     </script>
