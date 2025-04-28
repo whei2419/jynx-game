@@ -48,13 +48,17 @@
 
     <script>
         let hoverTimer = null;
+        //add click sound
+        const clickSound = new Audio('assets/SOUNDTRACK/select-sound.mp3');
 
         function startHover(lang) {
             hoverTimer = setTimeout(function () {
                 console.log(`Language selected: ${lang}`);
+                clickSound.play(); // Play the click sound
                 window.location.href = `start.html?lang=${lang}`;
             }, 1000); 
         }
+
         function cancelHover() {
             clearTimeout(hoverTimer);
         }

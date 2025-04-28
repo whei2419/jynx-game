@@ -34,10 +34,19 @@ var countdownText;
 var timerText;
 var scoreText;
 
+var isPaused = false;
+
 const params = new URLSearchParams(window.location.search);
 const lang = params.get('lang');
 
 function preload() {
+    this.load.audio('explosionSound', 'assets/SOUNDTRACK/bomb effects.mp3');
+    this.load.audio('collectSound', 'assets/SOUNDTRACK/collect bird nest.mp3');
+    this.load.audio('win', 'assets/SOUNDTRACK/game won.mp3');
+    this.load.audio('countDown', 'assets/SOUNDTRACK/countdownsound.mp3');
+    this.load.audio('bg-sound', 'assets/SOUNDTRACK/bg.mp3');
+    this.load.audio('wrongitem', 'assets/SOUNDTRACK/wrong item.mp3');
+
     this.load.image('backgroundEn', 'assets/bg.png');
     this.load.image('backgroundCh', 'assets/bgCh.png');
     this.load.image('jar1', 'assets/jar1.png');
@@ -51,7 +60,7 @@ function preload() {
     this.load.image('badObject4', 'assets/4.png');
     this.load.image('badObject5', 'assets/5.png');
     this.load.image('vignette', 'assets/vignette.png');
-    this.load.image('explosionspritesheet', 'assets/explosionspritesheet.png'); 
+    this.load.spritesheet('explosion', 'assets/exp.png', { frameWidth: 300, frameHeight: 300 });
     this.load.image('glow', 'assets/glow.png'); // Placeholder for liquid image
     this.load.image('water-1', 'assets/water-1.png');
     this.load.image('jar0', 'assets/jar0.png');
@@ -80,7 +89,26 @@ function create() {
     // Set the bounds of the world
     this.physics.world.setBounds(0, 0, this.cameras.main.width, this.cameras.main.height);
 
-    // Set up background and make it stretch to game dimensions
+    // create a sprite animation explosion
+    this.anims.create({
+        key: 'explosion',
+        frames: this.anims.generateFrameNumbers('explosion', { start: 0, end: 21 }),
+        frameRate: 16,
+        repeat: 0,
+        hideOnComplete: true
+    });
+
+    this.explosionSound = this.sound.add('explosionSound');
+    this.collectSound = this.sound.add('collectSound');
+    this.winSound = this.sound.add('win');
+    this.countdownSound = this.sound.add('countDown');
+    this.wrongItemSound = this.sound.add('wrongitem');
+    this.bgSound = this.sound.add('bg-sound', { loop: true });
+ 
+    this.countdownSound.play();
+
+
+    
 
     if (lang === 'chinese') {
         this.background = this.add.image(0, 0, 'backgroundCh').setOrigin(0, 0);
@@ -210,6 +238,9 @@ function create() {
     this.startGame = function() {
         // Add a 2 second delay before starting the timers
         this.time.delayedCall(2000, () => {
+            //play bg music
+            this.countdownSound.stop();
+            this.bgSound.play();
             // Animate timerBg and scoreBg (pop-in scale and fade-in)
             this.timerBg.setScale(0.7).setAlpha(0);
             this.scoreBg.setScale(0.7).setAlpha(0);
@@ -283,9 +314,15 @@ function create() {
 
     // Add mouse movement listener for left/right movement
     this.input.on('pointermove', (pointer) => {
-        // Only allow movement if countdown is finished
+        // Only allow movement if countdown is finished and game is not over
         if (!this.countdownEvent || this.countdownNumber <= 0) {
-            this.jarContainer.x = Phaser.Math.Clamp(pointer.x, this.jarContainer.width / 2, this.cameras.main.width - this.jarContainer.width / 2);
+            if (!this.isGameOver) {
+                this.jarContainer.x = Phaser.Math.Clamp(
+                    pointer.x,
+                    this.jarContainer.width / 2,
+                    this.cameras.main.width - this.jarContainer.width / 2
+                );
+            }
         }
     });
 
@@ -327,7 +364,14 @@ function spawnItem() {
             { key: 'badObject5', isGood: false }
         ];
     var randomItem = Phaser.Math.RND.pick(allItems);
-    var x = Phaser.Math.Between(0, this.cameras.main.width);
+
+    // Calculate item width for safe spawn
+    const texture = this.textures.get(randomItem.key);
+    const frame = texture.getSourceImage ? texture.getSourceImage() : null;
+    const itemWidth = frame ? frame.width * 0.6 : 100 * 0.6; // 0.6 is your scale
+    const minX = itemWidth / 2;
+    const maxX = this.cameras.main.width - itemWidth / 2;
+    var x = Phaser.Math.Between(minX, maxX);
     var y = -100;
     var item = this.items.create(x, y, randomItem.key);
     item.isGood = randomItem.isGood;
@@ -354,7 +398,7 @@ function catchItem(jar, item) {
         item.disableBody(true, true);
         explosionAnimation.call(this);
         setTimeout(() => {
-            endGame.call(this);
+            // endGame.call(this);
         }, 3000);
     } else if(item.texture.key === 'goodObject') {
         item.disableBody(true, true);
@@ -373,6 +417,7 @@ function catchItem(jar, item) {
 
 function goodAnimation() {
     // Animate the jar: scale up, rotate, and bounce
+    this.collectSound.play();
     this.tweens.add({
         targets: this.jar,
         scaleX: 1.05,
@@ -413,11 +458,65 @@ function goodAnimation() {
 }
 
 function explosionAnimation() {
-    this.cameras.main.shake(300, 0.02);
-    this.cameras.main.flash(300, 255, 0, 0);
-}
+    this.isGameOver = true;
 
+    // Step 1: Move jar up, scale up, and shake (jar wiggle)
+    this.tweens.add({
+        targets: this.jarContainer,
+        y: this.jarContainer.y - 80,
+        scaleX: 1.15,
+        scaleY: 1.15,
+        duration: 350,
+        ease: 'Cubic.easeOut',
+        yoyo: false,
+        onUpdate: () => {
+            // Optional: shake effect by rotating a bit
+            this.jarContainer.angle = Phaser.Math.Between(-8, 8);
+        },
+        onComplete: () => {
+            this.jarContainer.angle = 0;
+            //hide the jar
+            this.jarContainer.setVisible(false);
+
+            // Step 2: Shake the screen and show explosion
+            this.cameras.main.shake(400, 0.03);
+
+            const explosion = this.add.sprite(
+                this.jarContainer.x,
+                this.jarContainer.y,
+                'explosion'
+            )
+            .setScale(1.2)
+            .setDepth(2000);
+            this.explosionSound.play();
+            explosion.play('explosion');
+            explosion.on('animationcomplete', () => explosion.destroy());
+
+            // Step 3: Fade out all game elements after a short delay
+            this.time.delayedCall(500, () => {
+                this.tweens.add({
+                    targets: [
+                        this.background,
+                        this.jarContainer,
+                        this.timerBg,
+                        this.timerText,
+                        this.scoreBg,
+                        this.scoreText,
+                        this.vignette
+                    ],
+                    alpha: 0,
+                    duration: 800,
+                    onComplete: () => {
+                        // Optionally, end the game or redirect here
+                        endGame.call(this);
+                    }
+                });
+            });
+        }
+    });
+}
 function bombAnimation() {
+    this.wrongItemSound.play();
     this.tweens.add({
         targets: this.jar,
         x: this.jar.x - 20,
@@ -439,11 +538,6 @@ function bombAnimation() {
 }
 
 function endGame() {
-    if (this.isGameOver) return;
-    this.isGameOver = true;
-    // Prevent further interaction
-    this.input.enabled = false;
-    this.game.pause();
     window.location.href = `finish.html?score=${score}&lang=${lang}`;
 }
 
