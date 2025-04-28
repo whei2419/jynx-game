@@ -1,0 +1,14 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, #f0b833, #f7768e);
+  }
+  
+  #gameContainer {
+    width: 100%;
+    height: 100%;
+  }
+  
