@@ -542,7 +542,13 @@ function bombAnimation() {
 }
 
 function endGame() {
-    window.location.href = `finish.html?score=${score}&lang=${lang}`;
+    if(score == 18) {
+        this.winSound.play();
+        this.winSound.volume = 0.5;
+    }
+    setTimeout(() => {
+        window.location.href = `finish.html?score=${score}&lang=${lang}`;
+    }, 2000);
 }
 
 function resizeGame() {

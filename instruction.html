@@ -34,7 +34,7 @@
 
     <script>
         let hoverTimer = null;
-        let selectedLang = 'english'; // default
+        let selectedLang = ''; // default
 
         window.onload = function () {
             const params = new URLSearchParams(window.location.search);
@@ -55,8 +55,15 @@
 
             // Start the hover timer when hovering over the button
             startButton.addEventListener('mouseover', function () {
+                const clickSound = new Audio('assets/SOUNDTRACK/select-sound.mp3');
+                const completeSound = new Audio('assets/SOUNDTRACK/completed.mp3');
+                clickSound.play(); 
                 hoverTimer = setTimeout(function () {
-                    window.location.href = `game.html?lang=${selectedLang}`;
+                    completeSound.play();
+                    setTimeout(function () {
+                        // Redirect to the game page with the selected language
+                        window.location.href = `game.html?lang=${selectedLang}`;
+                    }, 500); // 3 seconds
                 }, 1000); // 3 seconds
             });
 
@@ -70,7 +77,7 @@
 
 <body>
     <div class="buttoncontainer">
-        <button id="startButton" class="start-button">Start</button>
+        <button id="startButton" class="start-button"></button>
     </div>
 </body>
 <script src="/button.js"></script>

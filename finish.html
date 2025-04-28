@@ -70,8 +70,14 @@
 
             // Start the hover timer when hovering over the button
             startButton.addEventListener('mouseover', function () {
-                hoverTimer = setTimeout(function () {
-                    window.location.href = `index.html?lang=${selectedLang}`;
+                const clickSound = new Audio('assets/SOUNDTRACK/select-sound.mp3');
+                const completeSound = new Audio('assets/SOUNDTRACK/completed.mp3');
+                clickSound.play(); 
+                setTimeout(function () {
+                    completeSound.play();
+                    setTimeout(function () {
+                        window.location.href = `index.html?lang=${selectedLang}`;
+                    }, 500);
                 }, 1000); // 3 seconds
             });
 
@@ -86,7 +92,7 @@
 <body>
     <p id="score"></p>
     <div class="buttoncontainer">
-        <button id="startButton" class="start-button">Start</button>
+        <button id="startButton" class="start-button"></button>
     </div>
 </body>
 <script src="/button.js"></script>

@@ -49,13 +49,16 @@
     <script>
         let hoverTimer = null;
         //add click sound
-        const clickSound = new Audio('assets/SOUNDTRACK/select-sound.mp3');
-
         function startHover(lang) {
+            const clickSound = new Audio('assets/SOUNDTRACK/select-sound.mp3');
+            const completeSound = new Audio('assets/SOUNDTRACK/completed.mp3');
+            clickSound.play(); 
             hoverTimer = setTimeout(function () {
-                console.log(`Language selected: ${lang}`);
-                clickSound.play(); // Play the click sound
-                window.location.href = `start.html?lang=${lang}`;
+                completeSound.play();
+
+               setTimeout(function () {
+                    window.location.href = `start.html?lang=${lang}`;
+                }, 500); // Delay before redirecting
             }, 1000); 
         }
 

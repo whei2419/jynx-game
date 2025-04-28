@@ -54,8 +54,14 @@
             }
 
             startButton.addEventListener('mouseover', function () {
+                const clickSound = new Audio('assets/SOUNDTRACK/select-sound.mp3');
+                const completeSound = new Audio('assets/SOUNDTRACK/completed.mp3');
+                clickSound.play(); 
                 hoverTimer = setTimeout(function () {
-                    window.location.href = `instruction.html?lang=${selectedLang}`;
+                    completeSound.play();
+                    setTimeout(function () {
+                        window.location.href = `instruction.html?lang=${selectedLang}`;
+                    }, 500);
                 }, 1000);
             });
 
