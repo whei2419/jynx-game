@@ -388,10 +388,13 @@ function spawnItem() {
 }
 
 function updateTimer() {
-    timer--;
-    this.timerText.setText(`0:${timer < 10 ? '0' : ''}${timer}`);
+    if (timer > 0) {
+        timer--;
+        this.timerText.setText(`0:${timer < 10 ? '0' : ''}${timer}`);
+    }
 
     if (timer <= 0) {
+        window.location.href = `gameover.html?score=${score}&lang=${lang}`;
         endGame.call(this);
     }
 }
@@ -538,8 +541,14 @@ function endGame() {
         this.winSound.play();
         this.winSound.volume = 0.5;
     }
+    this.buzzerSound.stop();
     setTimeout(() => {
-        window.location.href = `finish.html?score=${score}&lang=${lang}`;
+        if(timer === 0) {
+            window.location.href = `gameover.html?score=${score}&lang=${lang}`;
+        }else {
+            window.location.href = `finish.html?score=${score}&lang=${lang}`;
+        }
+       
     }, 2000);
 }
 
