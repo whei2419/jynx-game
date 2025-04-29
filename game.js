@@ -50,6 +50,7 @@ function preload() {
 
     this.load.image('backgroundEn', 'assets/bg.png');
     this.load.image('backgroundCh', 'assets/bgCh.png');
+    this.load.image('gamebg', 'assets/gameBackground.png');
     this.load.image('jar1', 'assets/jar1.png');
     this.load.image('jar2', 'assets/jar2.png');
     this.load.image('jar3', 'assets/jar3.png');
@@ -116,11 +117,13 @@ function create() {
 
     
 
-    if (lang === 'chinese') {
-        this.background = this.add.image(0, 0, 'backgroundCh').setOrigin(0, 0);
-    } else {
-        this.background = this.add.image(0, 0, 'backgroundEn').setOrigin(0, 0);
-    }
+    // if (lang === 'chinese') {
+    //     this.background = this.add.image(0, 0, 'backgroundCh').setOrigin(0, 0);
+    // } else {
+    //     this.background = this.add.image(0, 0, 'backgroundEn').setOrigin(0, 0);
+    // }
+
+    this.background = this.add.image(0, 0, 'gamebg').setOrigin(0, 0);
     this.background.displayWidth = this.cameras.main.width;
     this.background.displayHeight = this.cameras.main.height;
 
