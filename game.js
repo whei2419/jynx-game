@@ -84,6 +84,10 @@ function preload() {
     this.load.image('jar17', 'assets/jar17.png');
     this.load.image('countdown', 'assets/countdown.png');
     this.load.image('clock', 'assets/clock.png');
+    this.load.image('default', 'assets/whitetimer.png');
+    this.load.image('yellow', 'assets/10sec.png');
+    this.load.image('red', 'assets/redtimer.png');
+    this.load.image('scorebg', 'assets/scorebg-with-jar.png');
 }
 
 function create() {
@@ -150,23 +154,23 @@ function create() {
     this.items = this.physics.add.group();
 
     // Timer and score backgrounds and text, moved slightly inward for better appearance
-    this.timerBg = this.add.image(200, 280, 'clock')
+    this.timerBg = this.add.image(200, 280, 'default')
         .setOrigin(0.5)
         .setAlpha(0.92)
         .setDepth(99)
         .setVisible(false);
-    this.timerText = this.add.text(200, 280, '0:30', {
-        font: "bold 45px Arial Black, Arial, sans-serif",
+    this.timerText = this.add.text(200, 280, '30', {
+        font: "bold 70px Arial Black, Arial, sans-serif",
         fill: "#C88D43",
         align: 'center',
     }).setOrigin(0.5).setDepth(100).setVisible(false);
-    this.scoreBg = this.add.image(this.cameras.main.width - 200, 280, 'clock')
+    this.scoreBg = this.add.image(this.cameras.main.width - 200, 280, 'scorebg')
         .setOrigin(0.5)
         .setAlpha(0.92)
         .setDepth(99)
         .setVisible(false);
-    this.scoreText = this.add.text(this.cameras.main.width - 200, 280, '0/18', {
-        font: "bold 45px Arial Black, Arial, sans-serif",
+    this.scoreText = this.add.text(this.cameras.main.width - 150, 280, '0/18', {
+        font: "bold 70px Arial Black, Arial, sans-serif",
         fill: "#C88D43",
         align: 'center',
     }).setOrigin(0.5).setDepth(100).setVisible(false);
@@ -390,8 +394,39 @@ function spawnItem() {
 function updateTimer() {
     if (timer > 0) {
         timer--;
-        this.timerText.setText(`0:${timer < 10 ? '0' : ''}${timer}`);
+        if (timer <= 5) {
+            // red when under 5s
+            this.timerBg.setTexture('red');
+            this.timerText.setStyle({ fill: '#ffffff' });
+
+            // animate timer text to scale up and down
+            this.tweens.add({
+                targets: this.timerText,
+                scaleX: 1.7,
+                scaleY: 1.7,
+                duration: 100,
+                ease: 'Cubic.easeOut',
+                yoyo: true,
+                hold: 80,
+                onComplete: () => {
+                    this.timerText.setScale(1); // Reset scale after animation
+                }
+            });
+        }
+        else if (timer < 10) {
+            // yellow when under 10s
+            this.timerBg.setTexture('yellow');
+            this.timerText.setStyle({ fill: '#ffffff' });
+        }
+        else {
+            // default styling
+            this.timerBg.setTexture('default');
+            this.timerText.setStyle({ fill: '#C88D43' });
+        }
+
+        this.timerText.setText(`${timer < 10 ? '0' : ''}${timer}`);
     }
+    
 
     if (timer <= 0) {
         window.location.href = `gameover.html?score=${score}&lang=${lang}`;
@@ -511,7 +546,59 @@ function explosionAnimation() {
         duration: 500,
         ease: 'Cubic.easeOut',
     });
+
+    // reduce timer by 2 sec
+    reduceTimer.call(this);
 }
+
+function reduceTimer() {
+    if (timer > 0) {
+        timer -= 2; // Reduce timer by 2 seconds
+        this.timerText.setText(`${timer < 10 ? '0' : ''}${timer}`);
+
+        //add animation to timer text scale it up and down
+        this.tweens.add({
+            targets: this.timerText,
+            scaleX: 2,
+            scaleY: 2,
+            duration: 100,
+            ease: 'Cubic.easeOut',
+            yoyo: true,
+            hold: 80,
+            onComplete: () => {
+                this.timerText.setScale(1); 
+
+                // add -2 text beside timer baground
+                const minusText = this.add.text(this.timerBg.x + 220, this.timerBg.y+30, '-2', {
+                    font: "bold 50px Arial Black, Arial, sans-serif",
+                    fill: "#FFFFFF",
+                    opacity: 0.8,
+                    align: 'center',
+                }).setOrigin(0.5).setDepth(100).setAlpha(0);
+                this.tweens.add({
+                    targets: minusText,
+                    alpha: 1,
+                    y: this.timerBg.y - 30,
+                    duration: 200,
+                    ease: 'Cubic.easeOut',
+                    onComplete: () => {
+                        this.tweens.add({
+                            targets: minusText,
+                            alpha: 0,
+                            y: this.timerBg.y - 50,
+                            duration: 200,
+                            onComplete: () => minusText.destroy()
+                        });
+                    }
+                });
+
+
+            }
+        });
+       
+    }
+}
+
 
 function bombAnimation() {
     this.wrongItemSound.play();
