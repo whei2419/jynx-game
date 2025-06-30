@@ -228,7 +228,7 @@ function create() {
             this.tweens.add({
                 targets: [this.countdownOverlay, this.countdownBg],
                 alpha: 0,
-                duration: 400,
+                duration: 100,
                 onComplete: () => {
                     this.countdownOverlay.setVisible(false);
                     this.countdownBg.setVisible(false);
@@ -244,7 +244,7 @@ function create() {
         this.countdownSound.stop();
         this.buzzerSound.play();
         // Add a 2 second delay before starting the timers
-        this.time.delayedCall(2000, () => {
+        this.time.delayedCall(500, () => {
             //play bg music
             this.buzzerSound.stop();
             this.bgSound.play();
@@ -252,19 +252,19 @@ function create() {
             this.timerText.setVisible(true);
             this.scoreText.setVisible(true);
             this.spawnItemEvent = this.time.addEvent({
-                delay: 1000,
+                delay: 100,
                 callback: this.spawnItem,
                 callbackScope: this,
                 loop: true
             });
             this.gameTimerEvent = this.time.addEvent({
-                delay: 1000,
+                delay: 500,
                 callback: this.updateTimer,
                 callbackScope: this,
                 loop: true
             });
         });
-        this.spawnDelay = 1000;
+        this.spawnDelay = 100;
         this.dropGravity = 300;
     }.bind(this);
 
