@@ -373,7 +373,7 @@ function updateTimer() {
 
 
         // Redirect to finish page after a delay
-        this.time.delayedCall(3000, () => {
+        this.time.delayedCall(2000, () => {
             window.location.href = `finish.html?score=${score}&lang=${lang}`;
         });
     }
