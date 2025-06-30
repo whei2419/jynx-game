@@ -14,7 +14,7 @@ html, body {
 
 
   body {
-    cursor: url('assets/cursor.png') 16 16, auto !important;
+    cursor: url('assets/dutch/Dutch Lady Logo 1.png') 16 16, auto !important;
   }
 
 
@@ -25,34 +25,65 @@ html, body {
     font-weight: 700;
   }
 
-button {
-  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1),
-              box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1),
-              background 0.18s cubic-bezier(0.4, 0, 0.2, 1),
-              border-color 0.18s cubic-bezier(0.4, 0, 0.2, 1),
-              color 0.18s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+.start-button {
+  background-color:#0060AC;
+  color: white;
+  border: 10px solid white;
+  font-size: 48px;
   cursor: pointer;
-  font-family: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec', Arial, Helvetica, sans-serif;
-  font-size: 1.1em;
-  border: 10px solid #ffffff;
-  border-radius: 12px;
-  padding: 12px 32px;
-  background: #ffe082;
-  color: #333;
-  font-weight: bold;
-  letter-spacing: 1px;
-  position: relative;
-  overflow: hidden;
-  position: relative;
+  width: 350px;
+  height: 110px;
+  border-radius: 70px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-decoration: none;
+  text-transform: uppercase;
+  position: relative; /* Needed for progress bar positioning */
+  overflow: hidden; /* Hide progress bar overflow */
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
-button:hover, button:focus {
+.start-button .progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 10px; /* Make it a bit thicker */
+    width: 0;
+    background-color: rgba(255, 255, 255, 0.9); /* Lighter/more opaque white */
+    transition: width 1s linear; /* 1s matches the dwell timeout */
+}
+
+.start-button.hand-hover .progress-bar {
+    width: 100%;
+}
+
+.start-button:hover,
+.start-button:focus,
+.start-button.hand-hover {
   transform: scale(1.08);
   box-shadow: 0 0 0 4px #0060AC, 0 6px 18px rgba(0,0,0,0.18);
-  background: linear-gradient(90deg, #0060AC 0%, #00408C 100%);
+  background: #005090; /* Darker blue on hover */
   color: #ffffff;
   border-color: #ffffff;
+}
+
+@keyframes dwell-loader-progress {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+button.hand-hover::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.7);
+  animation: dwell-loader-progress 1s linear;
+  z-index: 3; /* Ensure it's on top of other button content */
 }
 
 button .button-loader {
@@ -95,7 +126,21 @@ button.loading .button-loader {
 }
 @keyframes spin {
   0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  100% { transform: rotate(360deg); } 
+}
+
+#text-loader {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  text-transform: uppercase;
+  z-index: 10001;
+  display: none; /* Hidden by default */
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
 }
 
 

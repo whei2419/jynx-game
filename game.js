@@ -244,7 +244,7 @@ function create() {
         this.countdownSound.stop();
         this.buzzerSound.play();
         // Add a 2 second delay before starting the timers
-        this.time.delayedCall(2000, () => {
+        this.time.delayedCall(0, () => {
             //play bg music
             this.buzzerSound.stop();
             this.bgSound.play();
@@ -279,19 +279,7 @@ function create() {
         loop: true
     });
 
-    // Add mouse movement listener for left/right movement
-    this.input.on('pointermove', (pointer) => {
-        // Only allow movement if countdown is finished and game is not over
-        if (!this.countdownEvent || this.countdownNumber <= 0) {
-            if (!this.isGameOver) {
-                this.bowlContainer.x = Phaser.Math.Clamp(
-                    pointer.x,
-                    this.bowlContainer.width / 2,
-                    this.cameras.main.width - this.bowlContainer.width / 2
-                );
-            }
-        }
-    });
+    // The mouse listener has been removed to allow for hand tracking control.
 
     this.resizeGame = () => {
         this.cameras.main.setSize(window.innerWidth, window.innerHeight);
@@ -310,6 +298,18 @@ function create() {
 }
 
 function update() {
+    // Control bowl with hand tracking if available
+    if (typeof window.handX !== 'undefined' && window.handX !== null) {
+        // Only allow movement if countdown is finished and game is not over
+        if (!this.isGameOver && (!this.countdownEvent || this.countdownNumber <= 0)) {
+            this.bowlContainer.x = Phaser.Math.Clamp(
+                window.handX,
+                this.bowlContainer.width / 2,
+                this.cameras.main.width - this.bowlContainer.width / 2
+            );
+        }
+    }
+
     // Still check for overlap
     this.physics.overlap(this.bowlContainer, this.items, catchItem, null, this);
 }

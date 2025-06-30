@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Start Game</title>
     <link rel="stylesheet" href="font.css">
+    <link rel="stylesheet" href="hand-tracking.css">
     <style>
         body {
             margin: 0;
@@ -16,30 +17,6 @@
             position: relative;
         }
 
-        .start-button {
-            background-color: red;
-            color: white;
-            border: 2px solid white;
-            font-size: 48px;
-            cursor: pointer;
-            width: 315px;
-            height: 100px;
-            border-radius: 70px;
-        }
-
-        .start-button:hover {
-            opacity: 0.8;
-        }
-
-        .score {
-            font-size: 120px;
-            color: #fff;
-            position: absolute;
-            top: 783px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
         .buttoncontainer {
             position: absolute;
             bottom: 10%;
@@ -47,15 +24,12 @@
             transform: translateX(-50%);
         }
 
-        .start-button {
-            background-color: #0060AC;
-            color: white;
-            border: 10px solid white;
-            font-size: 48px;
-            cursor: pointer;
-            width: 350px;
-            height: 110px;
-            border-radius: 70px;
+        .score-container {
+            position: absolute;
+            top: 55%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
         }
 
         .your-score {
@@ -86,7 +60,6 @@
     </style>
 
     <script>
-        let hoverTimer = null;
         let selectedLang = ''; // default
 
         window.onload = function () {
@@ -97,53 +70,64 @@
             const body = document.body;
             const startButton = document.getElementById('startButton');
             const scoreDisplay = document.getElementById('score');
+            const startButtonLink = document.getElementById('startButtonLink');
+            const startButtonText = document.getElementById('startButtonText');
 
-            console.log(`Score: ${score}`);
+            scoreDisplay.textContent = score;
 
             if (lang === 'chinese') {
                 body.style.backgroundImage = "url('assets/ch-end.png')";
-                startButton.innerText = "结束";
+                startButtonText.innerText = "完成"; // "Finish" in Chinese
                 selectedLang = 'chinese';
-                scoreDisplay.innerText = score;
             } else {
                 body.style.backgroundImage = "url('assets/dutch/finish.webp')";
-                startButton.innerText = "Finish";
+                startButtonText.innerText = "FINISH";
                 selectedLang = 'english';
-                scoreDisplay.innerText = score;
             }
 
-            // Start the hover timer when hovering over the button
-            startButton.addEventListener('mouseover', function () {
+            // Set the destination for the hand-tracking dwell-to-click
+            // startButtonLink.href = `index.html?lang=${selectedLang}`;
+
+            startButtonLink.addEventListener('click', function (e) {
+                e.preventDefault(); // Prevent default link behavior
                 const clickSound = new Audio('assets/SOUNDTRACK/select-sound.mp3');
                 const completeSound = new Audio('assets/SOUNDTRACK/completed.mp3');
                 clickSound.play();
-                setTimeout(function () {
-                    completeSound.play();
-                    setTimeout(function () {
-                        window.location.href = `index.html?lang=${selectedLang}`;
-                    }, 500);
-                }, 1000); // 3 seconds
+                completeSound.play();
+                // Navigate after a short delay to allow sound to play
+                setTimeout(() => {
+                    window.location.href = `index.html?lang=${selectedLang}`;
+                }, 200); // 200ms delay
             });
 
-            // Cancel hover timer when mouse leaves the button
-            startButton.addEventListener('mouseout', function () {
-                clearTimeout(hoverTimer);
-            });
+            initHandTracking();
         }
     </script>
 </head>
 
 <body>
-    <div class="score">
-        <p class="your-score">YOUR SCORE:</p>
-        <p id="score"></p>
-        <p class="POINTS">POINTS</p>
+    <div id="text-loader">Loading...</div>
+    <div id="hand-cursor" class="hand-cursor"></div>
+    <div id="debug">
+        <video id="video" playsinline></video>
+        <canvas id="output" style="display: none;"></canvas>
+    </div>
+    <div class="score-container">
+        <div class="your-score">YOUR SCORE</div>
+        <div id="score">0</div>
+        <div class="POINTS">POINTS</div>
     </div>
 
     <div class="buttoncontainer">
-        <button id="startButton" class="start-button"></button>
+        <a id="startButtonLink" class="start-button" data-hover-effect="true">
+            <span id="startButtonText"></span>
+            <div class="progress-bar"></div>
+        </a>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
+    <script src="hand-tracking.js"></script>
 </body>
-<script src="/button.js"></script>
-
 </html>

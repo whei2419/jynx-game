@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Start Game</title>
     <link rel="stylesheet" href="font.css">
+    <link rel="stylesheet" href="hand-tracking.css">
     <style>
         body {
             margin: 0;
@@ -17,19 +18,12 @@
         }
 
         .start-button {
-            background-color:#0060AC;
-            color: white;
-            border: 10px solid white;
-            font-size: 48px;
-            cursor: pointer;
-            width: 350px;
-            height: 110px;
-            border-radius: 70px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-decoration: none;
         }
 
-        .start-button:hover {
-            opacity: 0.8;
-        }
         .video {
             position: absolute;
             top: 0;
@@ -40,9 +34,11 @@
             opacity: 0;
             z-index: -1;
         }
+
         .fade-in {
             animation: fadeIn 1s forwards;
         }
+
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -59,6 +55,35 @@
             left: 50%;
             transform: translateX(-50%);
         }
+
+        /* Loader styles */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        #text-loader {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            font-weight: bold;
+            color: #3498db;
+            z-index: 10000;
+        }
     </style>
 
     <script>
@@ -70,47 +95,56 @@
             const lang = params.get('lang');
 
             const body = document.body;
-            const startButton = document.getElementById('startButton');
-            const startVideo = document.getElementById('startVideo');
-            const videoContainer = document.querySelector('.video');
+            const startButtonLink = document.getElementById('startButtonLink');
+            const startButtonText = document.getElementById('startButtonText');
 
             if (lang === 'chinese') {
                 body.style.backgroundImage = "url('assets/startcn.png')";
-                startButton.innerText = "开始";
+                startButtonText.innerText = "开始";
                 selectedLang = 'chinese';
             } else {
                 body.style.backgroundImage = "url('assets/dutch/start.webp')"; 
-                startButton.innerText = "Start";
+                startButtonText.innerText = "Start";
                 selectedLang = 'english';
             }
 
-            startButton.addEventListener('mouseover', function () {
+            // The hand-tracking script will trigger a click on the link.
+            // We listen for that click to play sounds and navigate.
+            startButtonLink.addEventListener('click', function (e) {
+                e.preventDefault(); // Prevent default link behavior
                 const clickSound = new Audio('assets/SOUNDTRACK/select-sound.mp3');
                 const completeSound = new Audio('assets/SOUNDTRACK/completed.mp3');
-                clickSound.play(); 
-                hoverTimer = setTimeout(function () {
-                    completeSound.play();
-                      window.location.href = `instruction.html?lang=${selectedLang}`;
-                }, 1000); 
+                clickSound.play();
+                completeSound.play();
+                // Navigate after a short delay to allow sound to play
+                setTimeout(() => {
+                    window.location.href = `instruction.html?lang=${selectedLang}`;
+                }, 200); // 200ms delay
             });
 
-            startButton.addEventListener('mouseout', function () {
-                clearTimeout(hoverTimer);
-            });
+            initHandTracking();
         }
     </script>
 </head>
 
 <body>
+    <div id="text-loader">Loading...</div>
+    <div id="hand-cursor" class="hand-cursor"></div>
+    <div id="debug">
+        <video id="video" playsinline></video>
+        <canvas id="output"></canvas>
+    </div>
     <div class="buttoncontainer">
-        <button id="startButton" class="start-button"></button>
+        <a href="instruction.html" id="startButtonLink" class="start-button button" title="Start Game">
+            <span id="startButtonText"></span>
+            <div class="progress-bar"></div>
+        </a>
     </div>
-    <div class="video">
-        <video id="startVideo">
-            <source src="assets/Add a heading.mp4" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
+    <script src="hand-tracking.js"></script>
 </body>
-<script src="/button.js"></script>
+
 </html>

@@ -6,34 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Start Game</title>
     <link rel="stylesheet" href="font.css">
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            background-size: cover;
-            background-position: center;
-            position: relative;
-        }
-
-        .start-button {
-            background-color: red;
-            color: white;
-            border: 2px solid white;
-            font-size: 48px;
-            cursor: pointer;
-            width: 400px;
-            height: 100px;
-            border-radius: 70px;
-        }
-
-        .start-button:hover {
-            opacity: 0.8;
-        }
-    </style>
-
+    <link rel="stylesheet" href="hand-tracking.css">
     <script>
-        let hoverTimer = null;
         let selectedLang = ''; // default
 
         window.onload = function () {
@@ -41,44 +15,51 @@
             const lang = params.get('lang');
 
             const body = document.body;
-            const startButton = document.getElementById('startButton');
+            const tryAgainLink = document.getElementById('tryAgainLink');
+            const tryAgainText = document.getElementById('tryAgainText');
 
             if (lang === 'chinese') {
                 body.style.backgroundImage = "url('assets/game-over-ch.png')";
-                startButton.innerText = "再试一次";
+                tryAgainText.innerText = "再试一次";
                 selectedLang = 'chinese';
             } else {
                 body.style.backgroundImage = "url('assets/game-over-en.png')";
-                startButton.innerText = "Try Again";
+                tryAgainText.innerText = "Try Again";
                 selectedLang = 'english';
             }
 
-            // Start the hover timer when hovering over the button
-            startButton.addEventListener('mouseover', function () {
+            tryAgainLink.addEventListener('click', (e) => {
+                e.preventDefault();
                 const clickSound = new Audio('assets/SOUNDTRACK/select-sound.mp3');
-                const completeSound = new Audio('assets/SOUNDTRACK/completed.mp3');
                 clickSound.play();
-                hoverTimer = setTimeout(function () {
-                    completeSound.play();
-                    setTimeout(function () {
-                        // Redirect to start.html with the selected language
-                        window.location.href = `start.html?lang=${selectedLang}`;
-                    }, 500); // 3 seconds
-                }, 1000); // 3 seconds
+                setTimeout(() => {
+                    window.location.href = `game.html?lang=${selectedLang}`;
+                }, 200);
             });
 
-            // Cancel hover timer when mouse leaves the button
-            startButton.addEventListener('mouseout', function () {
-                clearTimeout(hoverTimer);
-            });
+            initHandTracking();
         }
     </script>
 </head>
 
 <body>
-    <div class="buttoncontainer">
-        <button id="startButton" class="start-button"></button>
+    <div id="text-loader">Loading...</div>
+    <div id="hand-cursor" class="hand-cursor"></div>
+    <div id="debug">
+        <video id="video" playsinline></video>
+        <canvas id="output"></canvas>
     </div>
+    <div class="buttoncontainer">
+        <a id="tryAgainLink" href="#" class="start-button" data-hover-effect="true">
+            <span id="tryAgainText"></span>
+            <div class="progress-bar"></div>
+        </a>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
+    <script src="hand-tracking.js"></script>
 </body>
-<script src="/button.js"></script>
+
 </html>
