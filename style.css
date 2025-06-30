@@ -11,18 +11,25 @@ html, body {
     overflow: hidden;
     width: 100%;
     height: 100%;
-    background: linear-gradient(to bottom, #f0b833, #f7768e);
+    background: linear-gradient(to bottom, #3B8DCB, #6EB0E0);
     font-family: 'HelveticaCustom', Arial, Helvetica, sans-serif;
   }
   
   #gameContainer {
     width: 100%;
     height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
   body, #gameContainer, canvas {
     cursor: none !important;
     font-family: 'HelveticaCustom', Arial, Helvetica, sans-serif;
+}
+
+canvas {
+    display: block;
 }
 
 .overlay {

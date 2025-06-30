@@ -1,9 +1,13 @@
 @font-face {
     font-family: 'Helvetica';
-    src: url('assets/Helvetica.ttf') format('truetype'); 
+    src: url('assets/font/HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec.otf') format('opentype'); 
     font-weight: normal;
     font-style: normal;
   }
+@font-face {
+    font-family: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec';
+    src: url('font/HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec.otf') format('opentype');
+}
 
 html, body {
     margin: 0;
@@ -35,9 +39,9 @@ button {
               color 0.18s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   cursor: pointer;
-  font-family: 'HelveticaCustom', Arial, Helvetica, sans-serif;
+  font-family: 'Helvetica', Arial, Helvetica, sans-serif;
   font-size: 1.1em;
-  border: 2px solid #ffe082;
+  border: 10px solid #ffffff;
   border-radius: 12px;
   padding: 12px 32px;
   background: #ffe082;
@@ -100,10 +104,5 @@ button.loading .button-loader {
   100% { transform: rotate(360deg); }
 }
 
-.buttoncontainer {
-    position: absolute;
-    bottom: 172px;
-    left: 50%;
-    transform: translateX(-50%);
-}
+
 

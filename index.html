@@ -4,77 +4,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Catch the Falling Items!</title>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js"></script>
+    <title>Start Game</title>
     <link rel="stylesheet" href="font.css">
     <style>
         body {
             margin: 0;
             padding: 0;
             height: 100vh;
-            background-image: url('assets/startbg.png');
             background-size: cover;
             background-position: center;
             position: relative;
         }
 
-        .button {
-            background-color: red;
+        .start-button {
+            background-color:#0060AC;
             color: white;
-            border: 2px solid white;
-            padding: 10px 20px;
+            border: 10px solid white;
             font-size: 48px;
             cursor: pointer;
-            width: 315px;
-            height: 100px;
+            width: 350px;
+            height: 110px;
             border-radius: 70px;
-            margin: 10px 0;
         }
 
-        .button:hover {
+        .start-button:hover {
             opacity: 0.8;
         }
-
-        .buttons-container {
+        .video {
             position: absolute;
-            bottom: 172px;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            z-index: -1;
+        }
+        .fade-in {
+            animation: fadeIn 1s forwards;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .buttoncontainer {
+            position: absolute;
+            bottom: 44%;
             left: 50%;
             transform: translateX(-50%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
         }
     </style>
 
     <script>
+        let selectedLang = ''; // default
         let hoverTimer = null;
-        //add click sound
-        function startHover(lang) {
-            const clickSound = new Audio('assets/SOUNDTRACK/select-sound.mp3');
-            const completeSound = new Audio('assets/SOUNDTRACK/completed.mp3');
-            clickSound.play(); 
-            hoverTimer = setTimeout(function () {
-                completeSound.play();
 
-               setTimeout(function () {
-                    window.location.href = `start.html?lang=${lang}`;
-                }, 500); // Delay before redirecting
-            }, 1000); 
-        }
+        window.onload = function () {
+            const params = new URLSearchParams(window.location.search);
+            const lang = params.get('lang');
 
-        function cancelHover() {
-            clearTimeout(hoverTimer);
+            const body = document.body;
+            const startButton = document.getElementById('startButton');
+            const startVideo = document.getElementById('startVideo');
+            const videoContainer = document.querySelector('.video');
+
+            if (lang === 'chinese') {
+                body.style.backgroundImage = "url('assets/startcn.png')";
+                startButton.innerText = "开始";
+                selectedLang = 'chinese';
+            } else {
+                body.style.backgroundImage = "url('assets/dutch/start.webp')"; 
+                startButton.innerText = "Start";
+                selectedLang = 'english';
+            }
+
+            startButton.addEventListener('mouseover', function () {
+                const clickSound = new Audio('assets/SOUNDTRACK/select-sound.mp3');
+                const completeSound = new Audio('assets/SOUNDTRACK/completed.mp3');
+                clickSound.play(); 
+                hoverTimer = setTimeout(function () {
+                    completeSound.play();
+                      window.location.href = `instruction.html?lang=${selectedLang}`;
+                }, 1000); 
+            });
+
+            startButton.addEventListener('mouseout', function () {
+                clearTimeout(hoverTimer);
+            });
         }
     </script>
 </head>
 
 <body>
-    <div class="buttons-container">
-        <button class="button" onmouseover="startHover('chinese')" onmouseout="cancelHover()">中文</button>
-
-        <button class="button" onmouseover="startHover('english')" onmouseout="cancelHover()">English</button>
+    <div class="buttoncontainer">
+        <button id="startButton" class="start-button"></button>
+    </div>
+    <div class="video">
+        <video id="startVideo">
+            <source src="assets/Add a heading.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
     </div>
 </body>
-
 <script src="/button.js"></script>
 </html>

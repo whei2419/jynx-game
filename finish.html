@@ -33,11 +33,12 @@
 
         #score {
             font-size: 120px;
-            color: #FFA000;
+            color: #fff;
             position: absolute;
             top: 735px;
             left: 54%;
             transform: translateX(-50%);
+            stroke: 6px solid #0A608E;
         }
     </style>
 
@@ -62,7 +63,7 @@
                 selectedLang = 'chinese';
                 scoreDisplay.innerText = score;
             } else {
-                body.style.backgroundImage = "url('assets/en-end.png')";
+                body.style.backgroundImage = "url('assets/dutch/finish.webp')"; 
                 startButton.innerText = "Finish";
                 selectedLang = 'english';
                 scoreDisplay.innerText = score;
