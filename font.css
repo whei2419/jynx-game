@@ -1,12 +1,6 @@
 @font-face {
-    font-family: 'Helvetica';
-    src: url('assets/font/HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec.otf') format('opentype'); 
-    font-weight: normal;
-    font-style: normal;
-  }
-@font-face {
     font-family: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec';
-    src: url('font/HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec.otf') format('opentype');
+    src: url('assets/font/HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec.otf') format('opentype'); 
 }
 
 html, body {
@@ -15,7 +9,7 @@ html, body {
     overflow: hidden;
     width: 100%;
     height: 100%;
-    font-family: 'Helvetica', Arial, Helvetica, sans-serif;
+    font-family: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec', Arial, Helvetica, sans-serif;
   }
 
 
@@ -25,7 +19,7 @@ html, body {
 
 
   p, h1, h2, h3, h4, h5, h6 ,button, input, textarea {
-    font-family: 'Helvetica', Arial, Helvetica, sans-serif;
+    font-family: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec', Arial, Helvetica, sans-serif;
     text-transform: uppercase;
     text-align: center;
     font-weight: 700;
@@ -39,7 +33,7 @@ button {
               color 0.18s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   cursor: pointer;
-  font-family: 'Helvetica', Arial, Helvetica, sans-serif;
+  font-family: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec', Arial, Helvetica, sans-serif;
   font-size: 1.1em;
   border: 10px solid #ffffff;
   border-radius: 12px;

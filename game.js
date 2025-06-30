@@ -159,7 +159,7 @@ function create() {
     this.physics.add.existing(this.timerContainerBg, true);
 
     // Adjust the X and Y values below to position the timer text
-    this.timerText = this.add.text(this.cameras.main.width - 500, 120, '00:20', {
+    this.timerText = this.add.text(this.cameras.main.width - 490, 117, '00:20', {
         fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec', // Adjust font size here
         fontSize: '40px',
         color: "#FFFFFF",
@@ -173,7 +173,7 @@ function create() {
     this.physics.add.existing(this.scoreContainerBg, true);
 
     // Adjust the X and Y values below to position the score text
-    this.scoreText = this.add.text(this.cameras.main.width - 180, 120, '0', {
+    this.scoreText = this.add.text(this.cameras.main.width - 175, 117, '0', {
         fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec', // Adjust font size here
         fontSize: '40px',
         color: "#FFFFFF",
