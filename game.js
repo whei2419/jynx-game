@@ -107,15 +107,6 @@ function create() {
  
     this.countdownSound.play();
 
-
-    
-
-    // if (lang === 'chinese') {
-    //     this.background = this.add.image(0, 0, 'backgroundCh').setOrigin(0, 0);
-    // } else {
-    //     this.background = this.add.image(0, 0, 'backgroundEn').setOrigin(0, 0);
-    // }
-
     this.background = this.add.image(0, 0, 'gamebg').setOrigin(0, 0);
     this.background.displayWidth = this.cameras.main.width;
     this.background.displayHeight = this.cameras.main.height;
@@ -394,12 +385,31 @@ function catchItem(bowlContainer, item) {
         return;
     }
 
-    const itemData = this.goodObjects.find(obj => obj.key === item.texture.key);
+    const points = item.getData('points');
 
-    if (itemData) {
-        score += itemData.points;
+    if (points) {
+        score += points;
         this.scoreText.setText(score);
         this.collectSound.play();
+
+        // Floating score text animation
+        const scorePopup = this.add.text(this.scoreText.x + this.scoreText.width / 2 + 40, this.scoreText.y, `+${points}`, {
+            fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec',
+            fontSize: '32px',
+            color: '#FFFF00', // Yellow color for visibility
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setDepth(101);
+
+        this.tweens.add({
+            targets: scorePopup,
+            y: scorePopup.y - 100, // Move up
+            alpha: 0, // Fade out
+            duration: 1500,
+            ease: 'Power1',
+            onComplete: () => {
+                scorePopup.destroy();
+            }
+        });
 
         // Animate the bowl: scale up, rotate, and bounce
         this.tweens.add({
