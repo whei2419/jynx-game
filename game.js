@@ -120,13 +120,13 @@ function create() {
 
 
     // Set up bowl and enable physics
-    this.bowl = this.add.sprite(0, 0, 'bowl').setOrigin(0.5);
+    this.bowl = this.add.sprite(0, -40, 'bowl').setOrigin(0.5); // Adjust this Y value to move the bowl down
     this.bowl.setScale(0.5);
     const bowlWidth = this.bowl.displayWidth;
     const bowlHeight = this.bowl.displayHeight;
 
     // Create a container to hold the bowl
-    this.bowlContainer = this.add.container(this.cameras.main.centerX, this.cameras.main.height - 150, [this.bowl]);
+    this.bowlContainer = this.add.container(this.cameras.main.centerX, this.cameras.main.height - 140, [this.bowl]);
     this.bowlContainer.setSize(bowlWidth, bowlHeight);
     this.physics.world.enable(this.bowlContainer);
     this.bowlContainer.body.setCollideWorldBounds(true);
@@ -395,7 +395,7 @@ function catchItem(bowlContainer, item) {
 
         // milk splash effect
         const splashX = item.x;
-        const splashY = this.bowlContainer.y - (this.bowlContainer.height / 2);
+        const splashY = item.y;
 
         const milkSplash = this.add.image(splashX, splashY, 'milkSplash').setOrigin(0.5).setDepth(101).setScale(0.1);
         const scorePopup = this.add.text(splashX, splashY, `+${points}`, {
@@ -427,8 +427,15 @@ function catchItem(bowlContainer, item) {
             duration: 200,
             ease: 'Power1'
         });
-    }
 
-    // Destroy the item
-    item.destroy();
+        item.setVisible(false);
+        item.body.enable = false;
+
+        this.time.delayedCall(400, () => {
+            item.destroy();
+        });
+    } else {
+        // Destroy the item if it has no points
+        item.destroy();
+    }
 }
