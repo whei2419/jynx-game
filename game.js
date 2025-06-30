@@ -82,6 +82,7 @@ function preload() {
     this.load.image('overlayTop', 'assets/dutch/overlaytop.webp');
     this.load.image('timerContainerBg', 'assets/dutch/timer.webp');
     this.load.image('scoreContainerBg', 'assets/dutch/totalscore.webp');
+    this.load.image('milkSplash', 'assets/dutch/milk splash.png');
 }
 
 function create() {
@@ -258,7 +259,7 @@ function create() {
                 loop: true
             });
             this.gameTimerEvent = this.time.addEvent({
-                delay: 500,
+                delay: 1000,
                 callback: this.updateTimer,
                 callbackScope: this,
                 loop: true
@@ -392,21 +393,25 @@ function catchItem(bowlContainer, item) {
         this.scoreText.setText(score);
         this.collectSound.play();
 
-        // Floating score text animation
-        const scorePopup = this.add.text(this.scoreText.x + this.scoreText.width / 2 + 40, this.scoreText.y, `+${points}`, {
+        // milk splash effect
+        const splashX = item.x;
+        const splashY = this.bowlContainer.y - (this.bowlContainer.height / 2);
+
+        const milkSplash = this.add.image(splashX, splashY, 'milkSplash').setOrigin(0.5).setDepth(101).setScale(0.1);
+        const scorePopup = this.add.text(splashX, splashY, `+${points}`, {
             fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec',
-            fontSize: '32px',
-            color: '#FFFF00', // Yellow color for visibility
+            fontSize: '30px',
+            color: '#063591', // Dark blue color for visibility
             fontStyle: 'bold'
-        }).setOrigin(0.5).setDepth(101);
+        }).setOrigin(0.5).setDepth(102);
 
         this.tweens.add({
-            targets: scorePopup,
-            y: scorePopup.y - 100, // Move up
-            alpha: 0, // Fade out
-            duration: 1500,
+            targets: [milkSplash, scorePopup],
+            alpha: 0,
+            duration: 800, // 0.8 seconds fade out
             ease: 'Power1',
             onComplete: () => {
+                milkSplash.destroy();
                 scorePopup.destroy();
             }
         });
@@ -416,36 +421,14 @@ function catchItem(bowlContainer, item) {
             targets: this.bowl,
             scaleX: this.bowl.scaleX * 1.1, // Relative scale increase
             scaleY: this.bowl.scaleY * 1.1, // Relative scale increase
-            angle: 10,
-            duration: 120,
-            ease: 'Cubic.easeOut',
+            rotation: 0.1,
             yoyo: true,
-            hold: 80,
-            onYoyo: () => {
-                this.bowl.setAngle(0);
-            }
-        });
-
-        // Animate the bowlContainer: quick upward jump and bounce
-        this.tweens.add({
-            targets: this.bowlContainer,
-            y: this.bowlContainer.y - 30,
-            duration: 100,
-            ease: 'Quad.easeOut',
-            yoyo: true,
-            hold: 60
-        });
-
-        // Add a quick white flash overlay for feedback
-        const flash = this.add.rectangle(this.cameras.main.centerX, this.cameras.main.centerY, this.cameras.main.width, this.cameras.main.height, 0xffffff, 0.18)
-            .setDepth(2000);
-        this.tweens.add({
-            targets: flash,
-            alpha: 0,
-            duration: 180,
-            onComplete: () => flash.destroy()
+            repeat: 0,
+            duration: 200,
+            ease: 'Power1'
         });
     }
 
+    // Destroy the item
     item.destroy();
 }
