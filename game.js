@@ -160,9 +160,11 @@ function create() {
 
     // Adjust the X and Y values below to position the timer text
     this.timerText = this.add.text(this.cameras.main.width - 500, 120, '00:20', {
-        font: "bold 50px 'BreviaExtraBlack'", // Adjust font size here
-        fill: "#FFFFFF",
+        fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec', // Adjust font size here
+        fontSize: '50px',
+        color: "#FFFFFF",
         align: 'center',
+        fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(100);
 
     this.scoreContainerBg = this.add.image(this.cameras.main.width - 170, 100, 'scoreContainerBg').setOrigin(0.5).setDepth(99);
@@ -172,9 +174,11 @@ function create() {
 
     // Adjust the X and Y values below to position the score text
     this.scoreText = this.add.text(this.cameras.main.width - 170, 120, '0', {
-        font: "bold 50px 'BreviaExtraBlack'", // Adjust font size here
-        fill: "#FFFFFF",
+        fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec', // Adjust font size here
+        fontSize: '50px',
+        color: "#FFFFFF",
         align: 'center',
+        fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(100);
 
     // Countdown text in the center
@@ -209,8 +213,10 @@ function create() {
     });
     // Countdown text styled and above background
     this.countdownText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, '3', {
-        font: "bold 200px Arial Black, Arial, sans-serif",
-        fill: "#063591",
+        fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec',
+        fontSize: '200px',
+        color: "#063591",
+        fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(1001);
 
     // Add vignette overlay, initially invisible
@@ -374,13 +380,6 @@ function updateTimer() {
         this.bgSound.stop();
         this.winSound.play();
 
-        // Fade in vignette
-        this.tweens.add({
-            targets: this.vignette,
-            alpha: 0.7,
-            duration: 800,
-            ease: 'Quad.easeIn'
-        });
 
         // Redirect to finish page after a delay
         this.time.delayedCall(3000, () => {

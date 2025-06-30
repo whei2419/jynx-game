@@ -55,10 +55,10 @@ button {
 
 button:hover, button:focus {
   transform: scale(1.08);
-  box-shadow: 0 0 0 4px #ffe082, 0 6px 18px rgba(0,0,0,0.18);
-  background: linear-gradient(90deg, #ffe082 0%, #ffd54f 100%);
-  color: #b26a00;
-  border-color: #ffd54f;
+  box-shadow: 0 0 0 4px #0060AC, 0 6px 18px rgba(0,0,0,0.18);
+  background: linear-gradient(90deg, #0060AC 0%, #00408C 100%);
+  color: #ffffff;
+  border-color: #ffffff;
 }
 
 button .button-loader {
