@@ -161,7 +161,7 @@ function create() {
     // Adjust the X and Y values below to position the timer text
     this.timerText = this.add.text(this.cameras.main.width - 500, 120, '00:20', {
         fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec', // Adjust font size here
-        fontSize: '50px',
+        fontSize: '40px',
         color: "#FFFFFF",
         align: 'center',
         fontStyle: 'bold'
@@ -173,9 +173,9 @@ function create() {
     this.physics.add.existing(this.scoreContainerBg, true);
 
     // Adjust the X and Y values below to position the score text
-    this.scoreText = this.add.text(this.cameras.main.width - 170, 120, '0', {
+    this.scoreText = this.add.text(this.cameras.main.width - 180, 120, '0', {
         fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec', // Adjust font size here
-        fontSize: '50px',
+        fontSize: '40px',
         color: "#FFFFFF",
         align: 'center',
         fontStyle: 'bold'
