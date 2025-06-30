@@ -47,6 +47,7 @@ function preload() {
     this.load.audio('bg-sound', 'assets/SOUNDTRACK/bg.mp3');
     this.load.audio('wrongitem', 'assets/SOUNDTRACK/wrong item.mp3');
     this.load.audio('buzzer', 'assets/SOUNDTRACK/long-buzzer.mp3');
+    this.load.audio('collect7Sound', 'assets/SOUNDTRACK/game won.mp3');
 
     this.load.image('backgroundEn', 'assets/bg.png');
     this.load.image('backgroundCh', 'assets/bgCh.png');
@@ -105,6 +106,7 @@ function create() {
     this.wrongItemSound = this.sound.add('wrongitem');
     this.bgSound = this.sound.add('bg-sound', { loop: true });
     this.buzzerSound = this.sound.add('buzzer', { loop: false });
+    this.collect7Sound = this.sound.add('collect7Sound');
  
     this.countdownSound.play();
 
@@ -391,16 +393,20 @@ function catchItem(bowlContainer, item) {
     if (points) {
         score += points;
         this.scoreText.setText(score);
-        this.collectSound.play();
+        if (points === 7) {
+            this.collect7Sound.play();
+        } else {
+            this.collectSound.play();
+        }
 
         // milk splash effect
         const splashX = item.x;
         const splashY = item.y;
 
-        const milkSplash = this.add.image(splashX, splashY, 'milkSplash').setOrigin(0.5).setDepth(101).setScale(0.1);
+        const milkSplash = this.add.image(splashX, splashY, 'milkSplash').setOrigin(0.5).setDepth(101).setScale(0.2);
         const scorePopup = this.add.text(splashX, splashY, `+${points}`, {
             fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec',
-            fontSize: '30px',
+            fontSize: '40px',
             color: '#063591', // Dark blue color for visibility
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(102);
