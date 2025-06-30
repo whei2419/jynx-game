@@ -72,18 +72,6 @@
             font-weight: bold;
             color: #3498db;
         }
-
-        #text-loader {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 24px;
-            font-weight: bold;
-            color: #3498db;
-            z-index: 10000;
-        }
     </style>
 
     <script>
@@ -91,6 +79,9 @@
         let hoverTimer = null;
 
         window.onload = function () {
+            const textLoader = document.getElementById('text-loader');
+            textLoader.style.display = 'block'; // Show loader immediately
+
             const params = new URLSearchParams(window.location.search);
             const lang = params.get('lang');
 
@@ -135,11 +126,12 @@
         <canvas id="output"></canvas>
     </div>
     <div class="buttoncontainer">
-        <a href="instruction.html" id="startButtonLink" class="start-button button" title="Start Game">
-            <span id="startButtonText"></span>
-            <div class="progress-bar"></div>
+        <a id="startButtonLink" href="game.html" class="start-button">
+            <span id="startButtonText" class="button-text">Start</span>
         </a>
     </div>
+
+    <div id="text-loader" style="display: none;">Loading Hand Tracking...</div>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>

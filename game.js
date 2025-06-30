@@ -173,7 +173,7 @@ function create() {
     }).setOrigin(0.5).setDepth(100);
 
     // Countdown text in the center
-    this.countdownNumber = 3;
+    this.countdownNumber = 4; // Start from 4, first tick will show 3
     // Add overlay for countdown with fade-in animation
     this.countdownOverlay = this.add.rectangle(
         this.cameras.main.centerX,
@@ -203,7 +203,7 @@ function create() {
         ease: 'Back.Out'
     });
     // Countdown text styled and above background
-    this.countdownText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, '3', {
+    this.countdownText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, '', { // Initially empty
         fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec',
         fontSize: '200px',
         color: "#063591",
@@ -217,67 +217,69 @@ function create() {
         .setAlpha(0)
         .setDepth(1000);
 
-    // Define updateCountdown as a scene method
-    this.updateCountdown = function() {
-        this.countdownNumber--;
-        if (this.countdownNumber > 0) {
-            this.countdownText.setText(this.countdownNumber);
-        } else {
-            this.countdownText.setText('');
-            // Animate overlay and background out
-            this.tweens.add({
-                targets: [this.countdownOverlay, this.countdownBg],
-                alpha: 0,
-                duration: 400,
-                onComplete: () => {
-                    this.countdownOverlay.setVisible(false);
-                    this.countdownBg.setVisible(false);
-                }
-            });
-            this.countdownEvent.remove();
-            this.startGame();
-        }
-    }.bind(this);
-
     // Define startGame as a scene method
     this.startGame = function() {
         this.countdownSound.stop();
         this.buzzerSound.play();
-        // Add a 2 second delay before starting the timers
-        this.time.delayedCall(0, () => {
-            //play bg music
-            this.buzzerSound.stop();
-            this.bgSound.play();
 
-            this.timerText.setVisible(true);
-            this.scoreText.setVisible(true);
-            this.spawnItemEvent = this.time.addEvent({
-                delay: 1000,
-                callback: this.spawnItem,
-                callbackScope: this,
-                loop: true
-            });
-            this.gameTimerEvent = this.time.addEvent({
-                delay: 1000,
-                callback: this.updateTimer,
-                callbackScope: this,
-                loop: true
-            });
+        //play bg music
+        this.buzzerSound.stop();
+        this.bgSound.play();
+
+        this.timerText.setVisible(true);
+        this.scoreText.setVisible(true);
+        this.spawnItemEvent = this.time.addEvent({
+            delay: 1000,
+            callback: this.spawnItem,
+            callbackScope: this,
+            loop: true
         });
+        this.gameTimerEvent = this.time.addEvent({
+            delay: 1000,
+            callback: this.updateTimer,
+            callbackScope: this,
+            loop: true
+        });
+
         this.spawnDelay = 1000;
         this.dropGravity = 300;
     }.bind(this);
 
+    // New Countdown Logic using a sequence
+    const startCountdown = () => {
+        // 3
+        this.countdownText.setText('3');
+        this.time.delayedCall(1000, () => {
+            // 2
+            this.countdownText.setText('2');
+            this.time.delayedCall(1000, () => {
+                // 1
+                this.countdownText.setText('1');
+                this.time.delayedCall(1000, () => {
+                    // GO!
+                    this.countdownText.setText('GO!');
+                    // Animate overlay and background out
+                    this.tweens.add({
+                        targets: [this.countdownOverlay, this.countdownBg, this.countdownText],
+                        alpha: 0,
+                        duration: 500,
+                        onComplete: () => {
+                            this.countdownOverlay.setVisible(false);
+                            this.countdownBg.setVisible(false);
+                            this.countdownText.setVisible(false);
+                            this.startGame(); // Start game after fade out
+                        }
+                    });
+                });
+            });
+        });
+    };
+
+    startCountdown(); // Start the sequence
+
     // Define spawnItem and updateTimer as scene methods for callbackScope
     this.spawnItem = spawnItem.bind(this);
     this.updateTimer = updateTimer.bind(this);
-
-    this.countdownEvent = this.time.addEvent({
-        delay: 1000,
-        callback: this.updateCountdown,
-        callbackScope: this,
-        loop: true
-    });
 
     // The mouse listener has been removed to allow for hand tracking control.
 

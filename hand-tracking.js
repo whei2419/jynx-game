@@ -3,14 +3,18 @@ let video, canvas, ctx, handCursor;
 let detector;
 let hoverTimeout = null;
 let lastHoveredElement = null;
+const selectSound = new Audio('assets/SOUNDTRACK/select-sound.mp3');
 
 // Smoothing variables
 let smoothedHandX = 0;
 let smoothedHandY = 0;
-const smoothingFactor = 0.85; // Higher value = more smoothing, but more lag.
+const smoothingFactor = 0.9; // Higher value = more smoothing, but more lag.
+const movementMultiplier = 1.5; // Increase for more sensitivity
 
 async function initHandTracking() {
     const loader = document.getElementById('text-loader');
+    const startTime = Date.now();
+
     if (loader) {
         loader.style.display = 'block';
     }
@@ -27,6 +31,12 @@ async function initHandTracking() {
 
     ctx = canvas.getContext('2d');
 
+    // Set initial cursor position to bottom-center
+    smoothedHandX = window.innerWidth / 2;
+    smoothedHandY = window.innerHeight - 60; // Start just above the bottom edge
+    handCursor.style.left = `${smoothedHandX}px`;
+    handCursor.style.top = `${smoothedHandY}px`;
+
     // Make cursor visible from the start
     handCursor.style.display = 'block';
 
@@ -39,8 +49,13 @@ async function initHandTracking() {
     } catch (error) {
         console.error("Initialization failed:", error);
     } finally {
+        const elapsedTime = Date.now() - startTime;
+        const minimumVisibleTime = 500; // ms
+
         if (loader) {
-            loader.style.display = 'none';
+            setTimeout(() => {
+                loader.style.display = 'none';
+            }, Math.max(0, minimumVisibleTime - elapsedTime));
         }
     }
 }
@@ -108,6 +123,7 @@ function handleDwell(element) {
             lastHoveredElement.classList.remove('hand-hover');
             clearTimeout(hoverTimeout);
         }
+        selectSound.play(); // Play sound on new hover
         lastHoveredElement = element;
         element.classList.add('hand-hover');
         hoverTimeout = setTimeout(() => {
@@ -156,22 +172,42 @@ async function detect() {
             const right = closest.pose.keypoints.find(kp => kp.name === 'right_wrist');
 
             if (right && right.score > 0.3) {
-                // Correct the X coordinate for the mirrored video
-                const handXOnCanvas = right.x * scale.x;
-                const handYOnCanvas = right.y * scale.y;
+                // --- Movement Multiplication Logic ---
+                // 1. Find the center of the video feed.
+                const videoCenterX = video.videoWidth / 2;
+                const videoCenterY = video.videoHeight / 2;
+
+                // 2. Calculate the hand's distance from the center.
+                const deltaX = right.x - videoCenterX;
+                const deltaY = right.y - videoCenterY;
+
+                // 3. Apply the multiplier to amplify the distance.
+                const amplifiedX = videoCenterX + deltaX * movementMultiplier;
+                const amplifiedY = videoCenterY + deltaY * movementMultiplier;
+
+                // 4. Scale the amplified coordinates to the canvas size.
+                const handXOnCanvas = amplifiedX * scale.x;
+                const handYOnCanvas = amplifiedY * scale.y;
 
                 // Apply smoothing
                 smoothedHandX = smoothingFactor * smoothedHandX + (1 - smoothingFactor) * handXOnCanvas;
                 smoothedHandY = smoothingFactor * smoothedHandY + (1 - smoothingFactor) * handYOnCanvas;
 
-
-                handCursor.style.left = `${smoothedHandX}px`;
-                handCursor.style.top = `${smoothedHandY}px`;
+                // Hide cursor in game, otherwise update its position
+                if (window.location.pathname.includes('game.html')) {
+                    handCursor.style.display = 'none';
+                } else {
+                    handCursor.style.left = `${smoothedHandX}px`;
+                    handCursor.style.top = `${smoothedHandY}px`;
+                }
 
                 window.handX = smoothedHandX;
 
-                // Use closest() to find the button, making hover detection more stable
+                // Hide the cursor temporarily to get the element underneath
+                handCursor.style.display = 'none';
                 let elementUnderCursor = document.elementFromPoint(smoothedHandX, smoothedHandY);
+                handCursor.style.display = 'block';
+
                 const targetElement = elementUnderCursor ? elementUnderCursor.closest('.start-button') : null;
 
                 if (targetElement) {
