@@ -112,18 +112,20 @@
                 scoreDisplay.innerText = score;
             }
 
-            // Start the hover timer when hovering over the button
-            startButton.addEventListener('mouseover', function () {
+            function handleInteraction() {
                 const clickSound = new Audio('assets/SOUNDTRACK/select-sound.mp3');
                 const completeSound = new Audio('assets/SOUNDTRACK/completed.mp3');
                 clickSound.play();
-                setTimeout(function () {
+                hoverTimer = setTimeout(function () {
                     completeSound.play();
                     setTimeout(function () {
                         window.location.href = `index.html?lang=${selectedLang}`;
                     }, 500);
-                }, 1000); // 3 seconds
-            });
+                }, 1000);
+            }
+
+            startButton.addEventListener('mouseover', handleInteraction);
+            startButton.addEventListener('click', handleInteraction);
 
             // Cancel hover timer when mouse leaves the button
             startButton.addEventListener('mouseout', function () {
@@ -141,9 +143,9 @@
     </div>
 
     <div class="buttoncontainer">
-        <button id="startButton" class="start-button"></button>
+        <button id="startButton" type="button" class="start-button"></button>
     </div>
+    <script src="/button.js"></script>
 </body>
-<script src="/button.js"></script>
 
 </html>

@@ -84,7 +84,7 @@
                 selectedLang = 'english';
             }
 
-            startButton.addEventListener('mouseover', function () {
+            function handleInteraction() {
                 const clickSound = new Audio('assets/SOUNDTRACK/select-sound.mp3');
                 const completeSound = new Audio('assets/SOUNDTRACK/completed.mp3');
                 clickSound.play(); 
@@ -92,7 +92,10 @@
                     completeSound.play();
                       window.location.href = `instruction.html?lang=${selectedLang}`;
                 }, 1000); 
-            });
+            }
+
+            startButton.addEventListener('mouseover', handleInteraction);
+            startButton.addEventListener('click', handleInteraction);
 
             startButton.addEventListener('mouseout', function () {
                 clearTimeout(hoverTimer);
@@ -103,7 +106,7 @@
 
 <body>
     <div class="buttoncontainer">
-        <button id="startButton" class="start-button"></button>
+        <button id="startButton" type="button" class="start-button"></button>
     </div>
     <div class="video">
         <video id="startVideo">
@@ -111,6 +114,7 @@
             Your browser does not support the video tag.
         </video>
     </div>
+    <script src="/button.js"></script>
 </body>
-<script src="/button.js"></script>
+
 </html>
