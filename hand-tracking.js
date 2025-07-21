@@ -44,7 +44,7 @@ async function initHandTracking() {
         resizeCanvas();
         await setupCamera();
         await loadModel();
-        console.log("Hand tracking initialized");
+        console.log("HAND TRACKING initialized successfully - this should only appear on non-game pages");
         detect(); // Start detection loop
     } catch (error) {
         console.error("Initialization failed:", error);
@@ -232,37 +232,5 @@ async function detect() {
     requestAnimationFrame(detect);
 }
 
-function initializeHandTracking() {
-    // Create and append the hand tracking elements to the DOM
-    const container = document.createElement('div');
-    container.id = 'hand-tracking-container';
-
-    video = document.createElement('video');
-    video.id = 'webcam';
-    video.playsInline = true;
-    video.muted = true;
-
-    canvas = document.createElement('canvas');
-    canvas.id = 'output';
-
-    container.appendChild(video);
-    container.appendChild(canvas);
-
-    handCursor = document.createElement('div');
-    handCursor.id = 'hand-cursor';
-
-    document.body.appendChild(container);
-    document.body.appendChild(handCursor);
-
-    ctx = canvas.getContext('2d');
-}
-
-async function main() {
-    initializeHandTracking();
-    resizeCanvas();
-    await setupCamera();
-    await loadModel();
-    detect();
-}
-
-main();
+// The initHandTracking() function above is called from HTML pages when needed
+// No automatic initialization - only when explicitly called

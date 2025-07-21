@@ -27,7 +27,7 @@ var config = {
 
 var game = new Phaser.Game(config);
 
-var timer = 20;
+var timer = 20000;
 var score = 0;
 
 var countdownText;
@@ -300,15 +300,45 @@ function create() {
 }
 
 function update() {
-    // Control bowl with hand tracking if available
-    if (typeof window.handX !== 'undefined' && window.handX !== null) {
+    // Control bowl with body tracking if available
+    // You can use different body parts for control:
+    // window.bodyX - overall body center
+    // window.shoulderX - shoulder position
+    // window.hipX - hip position
+    // window.handX - hand position (original)
+    
+    let controlX = null;
+    
+    // Priority order: try body center first, then shoulder, then hand
+    if (typeof window.bodyX !== 'undefined' && window.bodyX !== null) {
+        controlX = window.bodyX;
+        // console.log('Using bodyX:', controlX);
+    } else if (typeof window.shoulderX !== 'undefined' && window.shoulderX !== null) {
+        controlX = window.shoulderX;
+        // console.log('Using shoulderX:', controlX);
+    } else if (typeof window.handX !== 'undefined' && window.handX !== null) {
+        controlX = window.handX;
+        // console.log('Using handX:', controlX);
+    }
+    
+    if (controlX !== null) {
         // Only allow movement if countdown is finished and game is not over
         if (!this.isGameOver && (!this.countdownEvent || this.countdownNumber <= 0)) {
+            // Minimal smoothing for maximum speed and responsiveness
+            const targetX = controlX;
+            const currentX = this.bowlContainer.x;
+            const smoothedX = Phaser.Math.Linear(currentX, targetX, 0.95); // Very responsive
+            
             this.bowlContainer.x = Phaser.Math.Clamp(
-                window.handX,
+                smoothedX,
                 this.bowlContainer.width / 2,
                 this.cameras.main.width - this.bowlContainer.width / 2
             );
+        }
+    } else {
+        // Reduce debug frequency to avoid console spam
+        if (Math.random() < 0.01) { // Only 1% of the time
+            console.log('No tracking data available. bodyX:', window.bodyX, 'shoulderX:', window.shoulderX, 'handX:', window.handX);
         }
     }
 
