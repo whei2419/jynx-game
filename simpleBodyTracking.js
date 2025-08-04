@@ -12,6 +12,12 @@ class SimpleBodyTracker {
         window.shoulderX = null;
         window.hipX = null;
         window.handX = null; // Still track hands as fallback for body tracking
+        
+        // Add smoothing variables for better movement
+        this.smoothingBuffer = [];
+        this.bufferSize = 5; // Number of frames to average
+        this.velocitySmoothing = 0.15; // How much to smooth velocity changes
+        this.lastVelocity = 0;
     }
 
     async initialize() {
@@ -104,12 +110,14 @@ class SimpleBodyTracker {
         }
 
         try {
+            // Use estimateSinglePose to detect only the most prominent person
             const pose = await this.net.estimateSinglePose(this.video, {
                 flipHorizontal: true,
                 decodingMethod: 'single-person'
             });
 
-            if (pose && pose.keypoints) {
+            // Additional filtering: only process if we have high-confidence core keypoints
+            if (pose && pose.keypoints && this.isValidPrimaryPerson(pose.keypoints)) {
                 this.updateBodyPositions(pose.keypoints);
                 this.drawSkeleton(pose.keypoints); // Draw skeleton overlay
             }
@@ -122,6 +130,51 @@ class SimpleBodyTracker {
         setTimeout(() => {
             requestAnimationFrame(() => this.detectPose());
         }, 33); // ~30fps instead of 20fps for better responsiveness
+    }
+
+    // Validate that this is the primary person we want to track (not background people)
+    isValidPrimaryPerson(keypoints) {
+        const getKeypoint = (name) => keypoints.find(kp => kp.part === name);
+        
+        // Get core keypoints for validation
+        const nose = getKeypoint('nose');
+        const leftShoulder = getKeypoint('leftShoulder');
+        const rightShoulder = getKeypoint('rightShoulder');
+        
+        // Require high confidence on core keypoints to avoid tracking background people
+        const minConfidence = 0.4; // Higher threshold for primary person detection
+        
+        // Must have nose OR both shoulders with high confidence
+        const hasValidHead = nose && nose.score > minConfidence;
+        const hasValidShoulders = leftShoulder && rightShoulder && 
+                                 leftShoulder.score > minConfidence && 
+                                 rightShoulder.score > minConfidence;
+        
+        // Accept if we have either a clear head OR clear shoulders
+        if (!hasValidHead && !hasValidShoulders) {
+            return false;
+        }
+        
+        // Additional check: person should be reasonably centered and close to camera
+        // (helps filter out people in background or edges)
+        if (hasValidShoulders) {
+            const shoulderCenterX = (leftShoulder.position.x + rightShoulder.position.x) / 2;
+            const videoWidth = 257;
+            const centerRatio = shoulderCenterX / videoWidth; // 0 to 1
+            
+            // Person should be somewhat centered (not completely at edges)
+            if (centerRatio < 0.2 || centerRatio > 0.8) {
+                return false;
+            }
+            
+            // Shoulders should be reasonably sized (not too small = far away)
+            const shoulderDistance = Math.abs(leftShoulder.position.x - rightShoulder.position.x);
+            if (shoulderDistance < 30) { // Too small = probably background person
+                return false;
+            }
+        }
+        
+        return true;
     }
 
     updateBodyPositions(keypoints) {
@@ -151,17 +204,15 @@ class SimpleBodyTracker {
             const shoulderCenterX = (leftShoulder.position.x + rightShoulder.position.x) / 2;
             
             // Convert to screen coordinates WITHOUT MIRRORING (since video is already mirrored)
-            const directPosition = (shoulderCenterX / videoWidth) * screenWidth;
+            const rawPosition = (shoulderCenterX / videoWidth) * screenWidth;
             
             // Apply bounds with some padding
-            const clampedPosition = Math.max(150, Math.min(screenWidth - 150, directPosition));
+            const clampedPosition = Math.max(150, Math.min(screenWidth - 150, rawPosition));
             
-            // Add minimal smoothing for stability only
-            if (window.bodyX !== null) {
-                window.bodyX = window.bodyX * 0.2 + clampedPosition * 0.8; // Much less smoothing, more responsive
-            } else {
-                window.bodyX = clampedPosition; // First time initialization
-            }
+            // Advanced smoothing for smoother bowl movement
+            const smoothedPosition = this.applySmoothMovement(clampedPosition);
+            
+            window.bodyX = smoothedPosition;
             window.shoulderX = window.bodyX;
         }
         
@@ -194,9 +245,53 @@ class SimpleBodyTracker {
             const rightShoulder = getKeypoint('rightShoulder');
             if (leftShoulder && rightShoulder) {
                 const shoulderTilt = rightShoulder.position.y - leftShoulder.position.y;
-                console.log(`LEAN TRACKING: tilt=${shoulderTilt.toFixed(1)}, bodyX=${window.bodyX.toFixed(0)}, center=${(screenWidth/2).toFixed(0)}`);
             }
         }
+    }
+
+    // Advanced smoothing for smoother bowl movement
+    applySmoothMovement(newPosition) {
+        // Add new position to buffer
+        this.smoothingBuffer.push(newPosition);
+        
+        // Keep buffer at fixed size
+        if (this.smoothingBuffer.length > this.bufferSize) {
+            this.smoothingBuffer.shift();
+        }
+        
+        // Calculate weighted average (more recent positions have more weight)
+        let weightedSum = 0;
+        let totalWeight = 0;
+        
+        for (let i = 0; i < this.smoothingBuffer.length; i++) {
+            // More recent positions get higher weight
+            const weight = (i + 1) / this.smoothingBuffer.length;
+            weightedSum += this.smoothingBuffer[i] * weight;
+            totalWeight += weight;
+        }
+        
+        const averagePosition = weightedSum / totalWeight;
+        
+        // If this is the first position, use it directly
+        if (window.bodyX === null) {
+            this.lastVelocity = 0;
+            return averagePosition;
+        }
+        
+        // Calculate velocity (change in position)
+        const currentVelocity = averagePosition - window.bodyX;
+        
+        // Smooth the velocity to prevent jerky movements
+        const smoothedVelocity = this.lastVelocity * (1 - this.velocitySmoothing) + 
+                                currentVelocity * this.velocitySmoothing;
+        
+        // Apply the smoothed velocity to get the final position
+        const finalPosition = window.bodyX + smoothedVelocity;
+        
+        // Store velocity for next frame
+        this.lastVelocity = smoothedVelocity;
+        
+        return finalPosition;
     }
 
     // Draw skeleton overlay on the debug video
@@ -217,7 +312,7 @@ class SimpleBodyTracker {
         const mirrorX = (x) => this.skeletonCanvas.width - (x * scaleX);
         const scaleYCoord = (y) => y * scaleY;
         
-        // Define skeleton connections (PoseNet body parts)
+        // Define skeleton connections (PoseNet body parts) - ONLY shoulder to head movement
         const connections = [
             // Head and neck
             ['nose', 'leftEye'],
@@ -225,23 +320,8 @@ class SimpleBodyTracker {
             ['leftEye', 'leftEar'],
             ['rightEye', 'rightEar'],
             
-            // Torso
-            ['leftShoulder', 'rightShoulder'],
-            ['leftShoulder', 'leftHip'],
-            ['rightShoulder', 'rightHip'],
-            ['leftHip', 'rightHip'],
-            
-            // Arms
-            ['leftShoulder', 'leftElbow'],
-            ['leftElbow', 'leftWrist'],
-            ['rightShoulder', 'rightElbow'],
-            ['rightElbow', 'rightWrist'],
-            
-            // Legs
-            ['leftHip', 'leftKnee'],
-            ['leftKnee', 'leftAnkle'],
-            ['rightHip', 'rightKnee'],
-            ['rightKnee', 'rightAnkle']
+            // Shoulders only (for lean detection)
+            ['leftShoulder', 'rightShoulder']
         ];
         
         // Draw connections (lines between keypoints)
@@ -287,13 +367,11 @@ class SimpleBodyTracker {
             }
         });
         
-        // Highlight shoulder and hip points used for leaning detection
+        // Highlight shoulder points used for leaning detection
         const leftShoulder = getKeypoint('leftShoulder');
         const rightShoulder = getKeypoint('rightShoulder');
-        const leftHip = getKeypoint('leftHip');
-        const rightHip = getKeypoint('rightHip');
         
-        [leftShoulder, rightShoulder, leftHip, rightHip].forEach(point => {
+        [leftShoulder, rightShoulder].forEach(point => {
             if (point && point.score > 0.15) {
                 const x = mirrorX(point.position.x);
                 const y = scaleYCoord(point.position.y);
