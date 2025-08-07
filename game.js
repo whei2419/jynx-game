@@ -50,18 +50,12 @@ function preload() {
 
     this.load.image('backgroundEn', 'assets/bg.png');
     this.load.image('backgroundCh', 'assets/bgCh.png');
-    this.load.image('gamebg', 'assets/dutch/mainBackground.webp');  
+    this.load.image('gamebg', 'assets/dutch/start1.webp');  
     
     // Load good objects from folder and parse points from filename
     this.goodObjects = [
-        { key: 'goodObject_1_1', path: 'assets/dutch/fallingObjects/1 point (1).webp', points: 1 },
-        { key: 'goodObject_1_2', path: 'assets/dutch/fallingObjects/1 point (2).webp', points: 1 },
-        { key: 'goodObject_1_3', path: 'assets/dutch/fallingObjects/1 point (3).webp', points: 1 },
-        { key: 'goodObject_1_4', path: 'assets/dutch/fallingObjects/1 point (4).webp', points: 1 },
-        { key: 'goodObject_1_5', path: 'assets/dutch/fallingObjects/1 point (5).webp', points: 1 },
-        { key: 'goodObject_1_6', path: 'assets/dutch/fallingObjects/1 point (6).webp', points: 1 },
-        { key: 'goodObject_7_1', path: 'assets/dutch/fallingObjects/7 point (1).webp', points: 7 },
-        { key: 'goodObject_7_2', path: 'assets/dutch/fallingObjects/7 point (2).webp', points: 7 },
+        { key: 'goodObject_1_1', path: 'assets/dutch/fallingObjects/1.webp', points: -1 },
+        { key: 'goodObject_7_2', path: 'assets/dutch/fallingObjects/3.webp', points: 3 },
     ];
 
     this.goodObjects.forEach(obj => {
@@ -79,6 +73,8 @@ function preload() {
     this.load.image('red', 'assets/redtimer.png');
     this.load.image('scorebg', 'assets/scorebg-with-jar.png');
     this.load.image('bowl', 'assets/dutch/bowl.webp');
+    this.load.image('bowl_semi', 'assets/dutch/bowl_semi.webp');
+    this.load.image('bowl_full', 'assets/dutch/bowl_full.webp');
     this.load.image('overlayTop', 'assets/dutch/overlaytop.webp');
     this.load.image('timerContainerBg', 'assets/dutch/timer.webp');
     this.load.image('scoreContainerBg', 'assets/dutch/totalscore.webp');
@@ -139,6 +135,7 @@ function create() {
     this.minSpawnDelay = 600; // Minimum spawn delay (slower minimum)
     this.maxDropGravity = 900; // Maximum gravity (slower max)
     this.isGameOver = false; // Track game over state
+    this.bowlStage = 0; // Track bowl stage: 0=empty, 1=semi, 2=full
 
     // Create a physics group for falling items
     this.items = this.physics.add.group();
@@ -423,6 +420,15 @@ function catchItem(bowlContainer, item) {
         score += points;
         this.scoreText.setText(score);
         this.collectSound.play();
+
+        // Change bowl image based on score
+        if (score > 20 && this.bowlStage < 2) {
+            this.bowl.setTexture('bowl_full');
+            this.bowlStage = 2;
+        } else if (score > 10 && this.bowlStage < 1) {
+            this.bowl.setTexture('bowl_semi');
+            this.bowlStage = 1;
+        }
 
         // Floating score text animation
         const scorePopup = this.add.text(this.scoreText.x + this.scoreText.width / 2 + 40, this.scoreText.y, `+${points}`, {

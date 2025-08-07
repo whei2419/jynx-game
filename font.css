@@ -26,7 +26,7 @@ html, body {
   }
 
 .start-button {
-  background-color:#0060AC;
+  background-color: #1DA58F;
   color: white;
   border: 10px solid white;
   font-size: 48px;
@@ -64,8 +64,8 @@ html, body {
 .start-button:focus,
 .start-button.hand-hover {
   transform: scale(1.08);
-  box-shadow: 0 0 0 4px #0060AC, 0 6px 18px rgba(0,0,0,0.18);
-  background: #005090; /* Darker blue on hover */
+  box-shadow: 0 0 0 4px #1DA58F, 0 6px 18px rgba(0,0,0,0.18);
+  background: #1DA58F; /* Darker blue on hover */
   color: #ffffff;
   border-color: #ffffff;
 }
