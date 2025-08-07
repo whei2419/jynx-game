@@ -27,7 +27,7 @@ var config = {
 
 var game = new Phaser.Game(config);
 
-var timer = 20000;
+var timer = 20;
 var score = 0;
 
 var countdownText;
@@ -75,7 +75,7 @@ function preload() {
     this.load.image('bowl', 'assets/dutch/bowl.webp');
     this.load.image('bowl_semi', 'assets/dutch/bowl_semi.webp');
     this.load.image('bowl_full', 'assets/dutch/bowl_full.webp');
-    this.load.image('overlayTop', 'assets/dutch/overlaytop.webp');
+    this.load.image('logo', 'assets/dutch/logo.webp');
     this.load.image('timerContainerBg', 'assets/dutch/timer.webp');
     this.load.image('scoreContainerBg', 'assets/dutch/totalscore.webp');
 }
@@ -107,16 +107,9 @@ function create() {
     this.background.displayWidth = this.cameras.main.width;
     this.background.displayHeight = this.cameras.main.height;
 
-    this.overlayTop = this.add.image(0, 0, 'overlayTop').setOrigin(0, 0);
-    this.overlayTop.setScrollFactor(0);
-    this.overlayTop.scaleX = this.cameras.main.width / this.overlayTop.width;
-    this.overlayTop.scaleY = this.overlayTop.scaleX;
-    this.overlayTop.setDepth(98);
-
-
     // Set up bowl and enable physics
     this.bowl = this.add.sprite(0, 0, 'bowl').setOrigin(0.5);
-    this.bowl.setScale(0.5);
+    this.bowl.setScale(1.0);
     const bowlWidth = this.bowl.displayWidth;
     const bowlHeight = this.bowl.displayHeight;
 
@@ -422,10 +415,10 @@ function catchItem(bowlContainer, item) {
         this.collectSound.play();
 
         // Change bowl image based on score
-        if (score > 20 && this.bowlStage < 2) {
+        if (score > 10 && this.bowlStage < 2) {
             this.bowl.setTexture('bowl_full');
             this.bowlStage = 2;
-        } else if (score > 10 && this.bowlStage < 1) {
+        } else if (score > 3 && this.bowlStage < 1) {
             this.bowl.setTexture('bowl_semi');
             this.bowlStage = 1;
         }

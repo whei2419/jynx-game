@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=            // The hand-tracking script will trigger a click on the link.
+            // We listen for that click to play sounds and navigate.
+            startButtonLink.addEventListener('click', function (e) {
+                e.preventDefault(); // Prevent default link behavior
+                
+                // Clear auto-redirect timer when user clicks Join button
+                if (autoRedirectTimer) {
+                    clearTimeout(autoRedirectTimer);
+                }
+                
+                const clickSound = new Audio('assets/SOUNDTRACK/select-sound.mp3');
+                const completeSound = new Audio('assets/SOUNDTRACK/completed.mp3');
+                clickSound.play();
+                completeSound.play();
+                // Navigate after a short delay to allow sound to play
+                setTimeout(() => {
+                    window.location.href = `instruction.html?lang=${selectedLang}`;
+                }, 200); // 200ms delay
+            });
+
+            // Start the auto-redirect timer (only Join button click will stop it)
+            resetAutoRedirectTimer();
+
+            initHandTracking();nitial-scale=1">
+    <title>Start Game</title>
+    <link rel="stylesheet" href="font.css">
+    <link rel="stylesheet" href="hand-tracking.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .start-button {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            z-index: -1;
+        }
+
+        .fade-in {
+            animation: fadeIn 1s forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .buttoncontainer {
+            position: absolute;
+            bottom: 44%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Loader styles */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #3498db;
+        }
+    </style>
+
+    <script>
+        let selectedLang = ''; // default
+        let hoverTimer = null;
+        let autoRedirectTimer = null;
+
+        function resetAutoRedirectTimer() {
+            // Clear existing timer
+            if (autoRedirectTimer) {
+                clearTimeout(autoRedirectTimer);
+            }
+            
+            // Set new 30-second timer
+            autoRedirectTimer = setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 30000); // 30 seconds
+        }
+
+        window.onload = function () {
+            const textLoader = document.getElementById('text-loader');
+            textLoader.style.display = 'block'; // Show loader immediately
+
+            const params = new URLSearchParams(window.location.search);
+            const lang = params.get('lang');
+
+            const body = document.body;
+            const startButtonLink = document.getElementById('startButtonLink');
+            const startButtonText = document.getElementById('startButtonText');
+
+            if (lang === 'chinese') {
+                body.style.backgroundImage = "url('assets/startcn.png')";
+                startButtonText.innerText = "开始";
+                selectedLang = 'chinese';
+            } else {
+                body.style.backgroundImage = "url('assets/dutch/start.webp')"; 
+                startButtonText.innerText = "Join";
+                selectedLang = 'english';
+            }
+
+            // The hand-tracking script will trigger a click on the link.
+            // We listen for that click to play sounds and navigate.
+            startButtonLink.addEventListener('click', function (e) {
+                e.preventDefault(); // Prevent default link behavior
+                const clickSound = new Audio('assets/SOUNDTRACK/select-sound.mp3');
+                const completeSound = new Audio('assets/SOUNDTRACK/completed.mp3');
+                clickSound.play();
+                completeSound.play();
+                // Navigate after a short delay to allow sound to play
+                setTimeout(() => {
+                    window.location.href = `instruction.html?lang=${selectedLang}`;
+                }, 200); // 200ms delay
+            });
+
+            initHandTracking();
+        }
+    </script>
+</head>
+
+<body>
+    <div id="text-loader">Loading...</div>
+    <div id="hand-cursor" class="hand-cursor"></div>
+    <div id="debug">
+        <video id="video" playsinline></video>
+        <canvas id="output"></canvas>
+    </div>
+    <div class="buttoncontainer">
+        <a id="startButtonLink" href="game.html" class="start-button">
+            <span id="startButtonText" class="button-text">Start</span>
+        </a>
+    </div>
+
+    <div id="text-loader" style="display: none;">Loading Hand Tracking...</div>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
+    <script src="hand-tracking.js"></script>
+</body>
+
+</html>

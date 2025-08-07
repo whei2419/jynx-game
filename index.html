@@ -18,10 +18,21 @@
         }
 
         .start-button {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-decoration: none;
+            display: none;
+        }
+
+        .cotton-video {
+                position: absolute;
+        top: 51%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%;
+        max-width: 92vw;
+        height: auto;
+        border-radius: 20px;
+        z-index: 10;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+
         }
 
         .video {
@@ -47,13 +58,6 @@
             to {
                 opacity: 1;
             }
-        }
-
-        .buttoncontainer {
-            position: absolute;
-            bottom: 44%;
-            left: 50%;
-            transform: translateX(-50%);
         }
 
         /* Loader styles */
@@ -86,49 +90,35 @@
             const lang = params.get('lang');
 
             const body = document.body;
-            const startButtonLink = document.getElementById('startButtonLink');
-            const startButtonText = document.getElementById('startButtonText');
 
             if (lang === 'chinese') {
                 body.style.backgroundImage = "url('assets/startcn.png')";
-                startButtonText.innerText = "开始";
                 selectedLang = 'chinese';
             } else {
-                body.style.backgroundImage = "url('assets/dutch/start.webp')"; 
-                startButtonText.innerText = "Start";
+                body.style.backgroundImage = "url('assets/dutch/index.webp')"; 
                 selectedLang = 'english';
             }
 
-            // The hand-tracking script will trigger a click on the link.
-            // We listen for that click to play sounds and navigate.
-            startButtonLink.addEventListener('click', function (e) {
-                e.preventDefault(); // Prevent default link behavior
-                const clickSound = new Audio('assets/SOUNDTRACK/select-sound.mp3');
-                const completeSound = new Audio('assets/SOUNDTRACK/completed.mp3');
-                clickSound.play();
-                completeSound.play();
-                // Navigate after a short delay to allow sound to play
-                setTimeout(() => {
-                    window.location.href = `instruction.html?lang=${selectedLang}`;
-                }, 200); // 200ms delay
-            });
-
             initHandTracking();
+
+            // Add click event to entire page to go to join page
+            document.addEventListener('click', function() {
+                window.location.href = `join.html`;
+            });
         }
     </script>
 </head>
 
 <body>
     <div id="text-loader">Loading...</div>
+    <video class="cotton-video" autoplay loop muted playsinline>
+        <source src="assets/video/cotton.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
     <div id="hand-cursor" class="hand-cursor"></div>
     <div id="debug">
         <video id="video" playsinline></video>
         <canvas id="output"></canvas>
-    </div>
-    <div class="buttoncontainer">
-        <a id="startButtonLink" href="game.html" class="start-button">
-            <span id="startButtonText" class="button-text">Start</span>
-        </a>
     </div>
 
     <div id="text-loader" style="display: none;">Loading Hand Tracking...</div>

@@ -26,36 +26,39 @@
 
         .score-container {
             position: absolute;
-            top: 55%;
+            top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
+            background: white;
+            border-radius: 15px;
+            padding: 30px 50px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            min-width: 200px;
         }
 
         .your-score {
-            font-size: 30px;
-            text-align: center;
-            margin-bottom: 20px;
-            color: #002F87;
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-weight: normal;
         }
 
         #score {
-            font-size: 166px;
-            color: #fff;
-            padding: 0;
-            margin: 0;
-            line-height: 117px;
-            -webkit-text-stroke: 5px #002F87;
-            text-shadow: 0px 7px 0 #002F87;
+            font-size: 80px;
+            color: #00A86B;
+            font-weight: bold;
+            margin: 10px 0;
+            line-height: 1;
         }
 
         .POINTS {
-            font-size: 50px;
-            color: #fff;
-            padding: 0;
-            margin: 0;
-            -webkit-text-stroke: 2px #002F87;
-            text-shadow: 0px 3px 0 #002F87;
+            font-size: 24px;
+            color: #00A86B;
+            font-weight: bold;
+            margin-top: 5px;
+            text-transform: uppercase;
         }
     </style>
 
@@ -65,7 +68,7 @@
         window.onload = function () {
             const params = new URLSearchParams(window.location.search);
             const lang = params.get('lang');
-            const score = params.get('score');
+            const score = parseInt(params.get('score')) || 0;
 
             const body = document.body;
             const startButton = document.getElementById('startButton');
@@ -75,18 +78,21 @@
 
             scoreDisplay.textContent = score;
 
+            // Store score temporarily for later use in name input
+            localStorage.setItem('currentGameScore', score);
+
             if (lang === 'chinese') {
                 body.style.backgroundImage = "url('assets/ch-end.png')";
                 startButtonText.innerText = "完成"; // "Finish" in Chinese
                 selectedLang = 'chinese';
             } else {
                 body.style.backgroundImage = "url('assets/dutch/finish.webp')";
-                startButtonText.innerText = "FINISH";
+                startButtonText.innerText = "Continue";
                 selectedLang = 'english';
             }
 
             // Set the destination for the hand-tracking dwell-to-click
-            startButtonLink.href = `index.html?lang=${selectedLang}`;
+            startButtonLink.href = `name-input.html?lang=${selectedLang}&score=${score}`;
 
             startButtonLink.addEventListener('click', function (e) {
                 e.preventDefault(); // Prevent default link behavior
@@ -96,7 +102,7 @@
                 completeSound.play();
                 // Navigate after a short delay to allow sound to play
                 setTimeout(() => {
-                    window.location.href = `index.html?lang=${selectedLang}`;
+                    window.location.href = `name-input.html?lang=${selectedLang}&score=${score}`;
                 }, 200); // 200ms delay
             });
 

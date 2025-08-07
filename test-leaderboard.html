@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Leaderboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #00A86B;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #008f5a;
+        }
+        .danger {
+            background: #dc3545;
+        }
+        .danger:hover {
+            background: #c82333;
+        }
+        .leaderboard {
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .leaderboard-item:nth-child(odd) {
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Leaderboard Test Page</h1>
+        
+        <div class="form-group">
+            <label for="playerName">Player Name:</label>
+            <input type="text" id="playerName" placeholder="Enter player name">
+        </div>
+        
+        <div class="form-group">
+            <label for="playerScore">Score:</label>
+            <input type="number" id="playerScore" placeholder="Enter score" min="0">
+        </div>
+        
+        <button onclick="addScore()">Add Score</button>
+        <button onclick="viewLeaderboard()">View Leaderboard</button>
+        <button onclick="clearLeaderboard()" class="danger">Clear All</button>
+        <button onclick="addSampleData()">Add Sample Data</button>
+        <button onclick="forceReset()" class="danger">Force Daily Reset</button>
+        <button onclick="showResetInfo()">Show Reset Info</button>
+        
+        <div class="info-box">
+            <h3>Daily Reset Information</h3>
+            <p id="resetInfo">Loading...</p>
+        </div>
+        
+        <div class="leaderboard" id="leaderboardDisplay">
+            <h3>Current Leaderboard:</h3>
+            <div id="leaderboardList"></div>
+        </div>
+    </div>
+
+    <script>
+        // Function to check if leaderboard should be reset daily
+        function checkDailyReset() {
+            const today = new Date().toDateString();
+            const lastResetDate = localStorage.getItem('lastLeaderboardReset');
+            
+            if (lastResetDate !== today) {
+                localStorage.removeItem('gameLeaderboard');
+                localStorage.setItem('lastLeaderboardReset', today);
+                console.log('Daily leaderboard reset performed for:', today);
+                return true;
+            }
+            return false;
+        }
+
+        function addScore() {
+            const name = document.getElementById('playerName').value.trim();
+            const score = parseInt(document.getElementById('playerScore').value) || 0;
+            
+            if (!name || score <= 0) {
+                alert('Please enter a valid name and score');
+                return;
+            }
+            
+            // Get existing leaderboard from localStorage
+            let leaderboard = JSON.parse(localStorage.getItem('gameLeaderboard')) || [];
+            
+            // Check if player already exists
+            const existingPlayerIndex = leaderboard.findIndex(p => p.name.toLowerCase() === name.toLowerCase());
+            
+            if (existingPlayerIndex !== -1) {
+                // Update existing player's score if new score is higher
+                if (score > leaderboard[existingPlayerIndex].score) {
+                    leaderboard[existingPlayerIndex].score = score;
+                    leaderboard[existingPlayerIndex].date = new Date().toISOString();
+                    alert(`Updated ${name}'s score to ${score}!`);
+                } else {
+                    alert(`${name} already has a higher score (${leaderboard[existingPlayerIndex].score})`);
+                    return;
+                }
+            } else {
+                // Add new player to leaderboard
+                leaderboard.push({ 
+                    name: name, 
+                    score: score,
+                    date: new Date().toISOString()
+                });
+                alert(`Added ${name} with score ${score}!`);
+            }
+            
+            // Sort leaderboard by score (highest first) and keep top 50
+            leaderboard.sort((a, b) => b.score - a.score);
+            leaderboard = leaderboard.slice(0, 50);
+            
+            // Save back to localStorage
+            localStorage.setItem('gameLeaderboard', JSON.stringify(leaderboard));
+            
+            // Clear form and update display
+            document.getElementById('playerName').value = '';
+            document.getElementById('playerScore').value = '';
+            displayLeaderboard();
+        }
+        
+        function displayLeaderboard() {
+            // Check for daily reset first
+            if (checkDailyReset()) {
+                alert('Daily reset performed! Leaderboard cleared for new day.');
+            }
+            
+            const leaderboard = JSON.parse(localStorage.getItem('gameLeaderboard')) || [];
+            const listElement = document.getElementById('leaderboardList');
+            
+            if (leaderboard.length === 0) {
+                listElement.innerHTML = '<p>No scores yet!</p>';
+                return;
+            }
+            
+            listElement.innerHTML = '';
+            leaderboard.forEach((player, index) => {
+                const item = document.createElement('div');
+                item.className = 'leaderboard-item';
+                item.innerHTML = `
+                    <span><strong>#${index + 1}</strong> ${player.name}</span>
+                    <span>${player.score} points</span>
+                `;
+                listElement.appendChild(item);
+            });
+        }
+        
+        function forceReset() {
+            if (confirm('Force daily reset? This will clear all scores.')) {
+                localStorage.removeItem('gameLeaderboard');
+                localStorage.setItem('lastLeaderboardReset', new Date().toDateString());
+                displayLeaderboard();
+                showResetInfo();
+                alert('Force reset completed!');
+            }
+        }
+        
+        function showResetInfo() {
+            const lastReset = localStorage.getItem('lastLeaderboardReset') || 'Never';
+            const today = new Date().toDateString();
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            document.getElementById('resetInfo').innerHTML = `
+                <strong>Last Reset:</strong> ${lastReset}<br>
+                <strong>Today:</strong> ${today}<br>
+                <strong>Next Reset:</strong> ${tomorrow.toDateString()}<br>
+                <strong>Status:</strong> ${lastReset === today ? 'Reset today ✓' : 'Needs reset'}
+            `;
+        }
+        
+        function clearLeaderboard() {
+            if (confirm('Are you sure you want to clear all scores?')) {
+                localStorage.removeItem('gameLeaderboard');
+                displayLeaderboard();
+                alert('Leaderboard cleared!');
+            }
+        }
+        
+        function addSampleData() {
+            const sampleData = [
+                { name: "Josh", score: 37, date: new Date().toISOString() },
+                { name: "Derrick", score: 29, date: new Date().toISOString() },
+                { name: "Kelsey", score: 28, date: new Date().toISOString() },
+                { name: "Jack", score: 21, date: new Date().toISOString() },
+                { name: "Mary", score: 19, date: new Date().toISOString() },
+                { name: "Alice", score: 35, date: new Date().toISOString() },
+                { name: "Bob", score: 42, date: new Date().toISOString() },
+                { name: "Charlie", score: 15, date: new Date().toISOString() }
+            ];
+            
+            localStorage.setItem('gameLeaderboard', JSON.stringify(sampleData));
+            displayLeaderboard();
+            alert('Sample data added!');
+        }
+        
+        function viewLeaderboard() {
+            window.open('leaderboard.html', '_blank');
+        }
+        
+        // Initialize display
+        window.onload = function() {
+            displayLeaderboard();
+            showResetInfo();
+        };
+    </script>
+</body>
+</html>

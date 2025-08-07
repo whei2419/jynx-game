@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Insert Your Name</title>
+    <link rel="stylesheet" href="font.css">
+    <link rel="stylesheet" href="hand-tracking.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .start-button {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .name-input-container {
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 20px;
+            padding: 30px 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            width: 400px;
+        }
+
+        .title {
+            font-size: 24px;
+            color: #00A86B;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .name-input {
+            width: 90%;
+            padding: 12px 15px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            outline: none;
+            text-align: center;
+            margin: 0;
+            background: #f5f5f5;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .name-input:focus {
+            border-color: #00A86B;
+            background: white;
+        }
+
+        .keyboard-container {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+
+        .key {
+            width: 45px;
+            height: 45px;
+            margin: 3px;
+            border: 2px solid #00A86B;
+            border-radius: 6px;
+            background: white;
+            color: #333;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .key:hover {
+            background: #f0f0f0;
+            transform: translateY(-1px);
+        }
+
+        .key.active {
+            background: #00A86B;
+            color: white;
+        }
+
+        .key.special {
+            background: #00A86B;
+            color: white;
+            width: 65px;
+            font-size: 14px;
+        }
+
+        .key.space {
+            width: 180px;
+        }
+
+        .buttoncontainer {
+            position: absolute;
+            bottom: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="text-loader" style="display: none;">Loading...</div>
+    <div id="hand-cursor" class="hand-cursor"></div>
+    <div id="debug">
+        <video id="video" playsinline></video>
+        <canvas id="output" style="display: none;"></canvas>
+    </div>
+
+    <div class="name-input-container">
+        <div class="title">Insert Your Name</div>
+        <input type="text" class="name-input" id="nameInput" placeholder="" maxlength="20">
+    </div>
+
+    <div class="keyboard-container">
+        <div class="keyboard-row">
+            <div class="key" onclick="addLetter('q')">q</div>
+            <div class="key" onclick="addLetter('w')">w</div>
+            <div class="key" onclick="addLetter('e')">e</div>
+            <div class="key" onclick="addLetter('r')">r</div>
+            <div class="key" onclick="addLetter('t')">t</div>
+            <div class="key" onclick="addLetter('y')">y</div>
+            <div class="key" onclick="addLetter('u')">u</div>
+            <div class="key" onclick="addLetter('i')">i</div>
+            <div class="key" onclick="addLetter('o')">o</div>
+            <div class="key" onclick="addLetter('p')">p</div>
+        </div>
+        <div class="keyboard-row">
+            <div class="key" onclick="addLetter('a')">a</div>
+            <div class="key" onclick="addLetter('s')">s</div>
+            <div class="key" onclick="addLetter('d')">d</div>
+            <div class="key" onclick="addLetter('f')">f</div>
+            <div class="key" onclick="addLetter('g')">g</div>
+            <div class="key" onclick="addLetter('h')">h</div>
+            <div class="key" onclick="addLetter('j')">j</div>
+            <div class="key" onclick="addLetter('k')">k</div>
+            <div class="key" onclick="addLetter('l')">l</div>
+        </div>
+        <div class="keyboard-row">
+            <div class="key special" onclick="clearName()">⌂</div>
+            <div class="key" onclick="addLetter('z')">z</div>
+            <div class="key" onclick="addLetter('x')">x</div>
+            <div class="key" onclick="addLetter('c')">c</div>
+            <div class="key" onclick="addLetter('v')">v</div>
+            <div class="key" onclick="addLetter('b')">b</div>
+            <div class="key" onclick="addLetter('n')">n</div>
+            <div class="key" onclick="addLetter('m')">m</div>
+            <div class="key special" onclick="backspace()">⌫</div>
+        </div>
+        <div class="keyboard-row">
+            <div class="key special" onclick="toggleNumbers()">?123</div>
+            <div class="key">@</div>
+            <div class="key">🌐</div>
+            <div class="key space" onclick="addLetter(' ')"></div>
+            <div class="key">.</div>
+            <div class="key special">↵</div>
+        </div>
+    </div>
+
+    <div class="buttoncontainer">
+        <a id="finishButtonLink" href="finish.html" class="start-button">
+            <span id="finishButtonText" class="button-text">FINISH</span>
+        </a>
+    </div>
+
+    <script>
+        let selectedLang = 'english';
+        let numbersMode = false;
+
+        function toggleNumbers() {
+            numbersMode = !numbersMode;
+            updateKeyboard();
+        }
+
+        function updateKeyboard() {
+            const keyboardContainer = document.querySelector('.keyboard-container');
+            
+            if (numbersMode) {
+                keyboardContainer.innerHTML = `
+                    <div class="keyboard-row">
+                        <div class="key" onclick="addLetter('1')">1</div>
+                        <div class="key" onclick="addLetter('2')">2</div>
+                        <div class="key" onclick="addLetter('3')">3</div>
+                        <div class="key" onclick="addLetter('4')">4</div>
+                        <div class="key" onclick="addLetter('5')">5</div>
+                        <div class="key" onclick="addLetter('6')">6</div>
+                        <div class="key" onclick="addLetter('7')">7</div>
+                        <div class="key" onclick="addLetter('8')">8</div>
+                        <div class="key" onclick="addLetter('9')">9</div>
+                        <div class="key" onclick="addLetter('0')">0</div>
+                    </div>
+                    <div class="keyboard-row">
+                        <div class="key" onclick="addLetter('-')">-</div>
+                        <div class="key" onclick="addLetter('/')">/</div>
+                        <div class="key" onclick="addLetter(':')">:</div>
+                        <div class="key" onclick="addLetter(';')">;</div>
+                        <div class="key" onclick="addLetter('(')">(</div>
+                        <div class="key" onclick="addLetter(')')">)</div>
+                        <div class="key" onclick="addLetter('$')">$</div>
+                        <div class="key" onclick="addLetter('&')">&</div>
+                        <div class="key" onclick="addLetter('@')">@</div>
+                    </div>
+                    <div class="keyboard-row">
+                        <div class="key special" onclick="clearName()">⌂</div>
+                        <div class="key" onclick="addLetter('.')">,</div>
+                        <div class="key" onclick="addLetter('?')">?</div>
+                        <div class="key" onclick="addLetter('!')">!</div>
+                        <div class="key" onclick="addLetter(''')">'</div>
+                        <div class="key" onclick="addLetter('&quot;')">"</div>
+                        <div class="key" onclick="addLetter('.')">.</div>
+                        <div class="key" onclick="addLetter('_')">_</div>
+                        <div class="key special" onclick="backspace()">⌫</div>
+                    </div>
+                    <div class="keyboard-row">
+                        <div class="key special" onclick="toggleNumbers()">ABC</div>
+                        <div class="key" onclick="addLetter('#')">#</div>
+                        <div class="key">🌐</div>
+                        <div class="key space" onclick="addLetter(' ')"></div>
+                        <div class="key" onclick="addLetter('+')">+</div>
+                        <div class="key special">↵</div>
+                    </div>
+                `;
+            } else {
+                keyboardContainer.innerHTML = `
+                    <div class="keyboard-row">
+                        <div class="key" onclick="addLetter('q')">q</div>
+                        <div class="key" onclick="addLetter('w')">w</div>
+                        <div class="key" onclick="addLetter('e')">e</div>
+                        <div class="key" onclick="addLetter('r')">r</div>
+                        <div class="key" onclick="addLetter('t')">t</div>
+                        <div class="key" onclick="addLetter('y')">y</div>
+                        <div class="key" onclick="addLetter('u')">u</div>
+                        <div class="key" onclick="addLetter('i')">i</div>
+                        <div class="key" onclick="addLetter('o')">o</div>
+                        <div class="key" onclick="addLetter('p')">p</div>
+                    </div>
+                    <div class="keyboard-row">
+                        <div class="key" onclick="addLetter('a')">a</div>
+                        <div class="key" onclick="addLetter('s')">s</div>
+                        <div class="key" onclick="addLetter('d')">d</div>
+                        <div class="key" onclick="addLetter('f')">f</div>
+                        <div class="key" onclick="addLetter('g')">g</div>
+                        <div class="key" onclick="addLetter('h')">h</div>
+                        <div class="key" onclick="addLetter('j')">j</div>
+                        <div class="key" onclick="addLetter('k')">k</div>
+                        <div class="key" onclick="addLetter('l')">l</div>
+                    </div>
+                    <div class="keyboard-row">
+                        <div class="key special" onclick="clearName()">⌂</div>
+                        <div class="key" onclick="addLetter('z')">z</div>
+                        <div class="key" onclick="addLetter('x')">x</div>
+                        <div class="key" onclick="addLetter('c')">c</div>
+                        <div class="key" onclick="addLetter('v')">v</div>
+                        <div class="key" onclick="addLetter('b')">b</div>
+                        <div class="key" onclick="addLetter('n')">n</div>
+                        <div class="key" onclick="addLetter('m')">m</div>
+                        <div class="key special" onclick="backspace()">⌫</div>
+                    </div>
+                    <div class="keyboard-row">
+                        <div class="key special" onclick="toggleNumbers()">?123</div>
+                        <div class="key">@</div>
+                        <div class="key">🌐</div>
+                        <div class="key space" onclick="addLetter(' ')"></div>
+                        <div class="key">.</div>
+                        <div class="key special">↵</div>
+                    </div>
+                `;
+            }
+        }
+
+        window.onload = function () {
+            const params = new URLSearchParams(window.location.search);
+            const lang = params.get('lang');
+
+            const body = document.body;
+            const finishButtonLink = document.getElementById('finishButtonLink');
+            const finishButtonText = document.getElementById('finishButtonText');
+
+            if (lang === 'chinese') {
+                body.style.backgroundImage = "url('assets/startcn.png')";
+                finishButtonText.innerText = "完成";
+                selectedLang = 'chinese';
+                document.querySelector('.title').textContent = '输入您的姓名';
+            } else {
+                body.style.backgroundImage = "url('assets/dutch/start1.webp')"; 
+                finishButtonText.innerText = "FINISH";
+                selectedLang = 'english';
+            }
+
+            finishButtonLink.addEventListener('click', function (e) {
+                e.preventDefault();
+                finishNameInput();
+            });
+
+            initHandTracking();
+        }
+
+        function addLetter(letter) {
+            const input = document.getElementById('nameInput');
+            if (input.value.length < 20) {
+                input.value += letter;
+            }
+        }
+
+        function backspace() {
+            const input = document.getElementById('nameInput');
+            input.value = input.value.slice(0, -1);
+        }
+
+        function clearName() {
+            const input = document.getElementById('nameInput');
+            input.value = '';
+        }
+
+        function finishNameInput() {
+            const name = document.getElementById('nameInput').value.trim();
+            if (name) {
+                localStorage.setItem('playerName', name);
+                
+                // Get the score from URL params or localStorage
+                const params = new URLSearchParams(window.location.search);
+                const score = parseInt(params.get('score')) || parseInt(localStorage.getItem('currentGameScore')) || 0;
+                
+                // Save score to leaderboard
+                saveScoreToLeaderboard(name, score);
+                
+                const clickSound = new Audio('assets/SOUNDTRACK/select-sound.mp3');
+                const completeSound = new Audio('assets/SOUNDTRACK/completed.mp3');
+                clickSound.play();
+                completeSound.play();
+                
+                setTimeout(() => {
+                    window.location.href = `leaderboard.html?lang=${selectedLang}&score=${score}&name=${encodeURIComponent(name)}`;
+                }, 200);
+            }
+        }
+
+        // Function to check if leaderboard should be reset daily
+        function checkDailyReset() {
+            const today = new Date().toDateString(); // Get current date as string (e.g., "Mon Aug 07 2025")
+            const lastResetDate = localStorage.getItem('lastLeaderboardReset');
+            
+            if (lastResetDate !== today) {
+                // New day detected, clear the leaderboard
+                localStorage.removeItem('gameLeaderboard');
+                localStorage.setItem('lastLeaderboardReset', today);
+                console.log('Daily leaderboard reset performed for:', today);
+            }
+        }
+
+        // Function to save score to leaderboard
+        function saveScoreToLeaderboard(playerName, playerScore) {
+            if (!playerName || !playerScore || playerScore <= 0) {
+                return;
+            }
+
+            // Check for daily reset first
+            checkDailyReset();
+
+            // Get existing leaderboard from localStorage
+            let leaderboard = JSON.parse(localStorage.getItem('gameLeaderboard')) || [];
+            
+            // Check if player already exists
+            const existingPlayerIndex = leaderboard.findIndex(p => p.name.toLowerCase() === playerName.toLowerCase());
+            
+            if (existingPlayerIndex !== -1) {
+                // Update existing player's score if new score is higher
+                if (playerScore > leaderboard[existingPlayerIndex].score) {
+                    leaderboard[existingPlayerIndex].score = playerScore;
+                    leaderboard[existingPlayerIndex].date = new Date().toISOString();
+                }
+            } else {
+                // Add new player to leaderboard
+                leaderboard.push({ 
+                    name: playerName, 
+                    score: playerScore,
+                    date: new Date().toISOString()
+                });
+            }
+            
+            // Sort leaderboard by score (highest first) and keep top 50
+            leaderboard.sort((a, b) => b.score - a.score);
+            leaderboard = leaderboard.slice(0, 50);
+            
+            // Save back to localStorage
+            localStorage.setItem('gameLeaderboard', JSON.stringify(leaderboard));
+        }
+    </script>
+
+    <!-- Include hand tracking scripts if needed -->
+    <div id="text-loader">Loading...</div>
+    <div id="hand-cursor" class="hand-cursor"></div>
+    <div id="debug">
+        <video id="video" playsinline></video>
+        <canvas id="output" style="display: none;"></canvas>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
+    <script src="hand-tracking.js"></script>
+</body>
+
+</html>

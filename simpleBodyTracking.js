@@ -45,7 +45,7 @@ class SimpleBodyTracker {
             this.video.style.borderRadius = '8px';
             this.video.style.zIndex = '9999';
             this.video.style.transform = 'scaleX(-1)'; // Mirror the video for natural view
-            this.video.style.display = 'block'; // Show for debugging
+            this.video.style.display = 'none'; // Hide for production
             
             document.body.appendChild(this.video);
 
@@ -61,6 +61,7 @@ class SimpleBodyTracker {
             this.skeletonCanvas.style.zIndex = '10000'; // Above video
             this.skeletonCanvas.style.pointerEvents = 'none';
             this.skeletonCanvas.style.transform = 'scaleX(-1)'; // Mirror to match video
+            this.skeletonCanvas.style.display = 'none'; // Hide for production
             
             document.body.appendChild(this.skeletonCanvas);
             this.skeletonCtx = this.skeletonCanvas.getContext('2d');
@@ -85,8 +86,9 @@ class SimpleBodyTracker {
             this.isInitialized = true;
             console.log('Simple body tracking initialized successfully (optimized for performance)');
             
-            // Automatically show debug info for development
-            this.showDebugInfo();
+            // Debug info and video hidden for production
+            // Uncomment the line below to show debug info for development
+            // this.showDebugInfo();
             
             // Add keyboard shortcuts for debug controls
             document.addEventListener('keydown', (event) => {
