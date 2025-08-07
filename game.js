@@ -196,7 +196,7 @@ function create() {
     this.countdownText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, '', { // Initially empty
         fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec',
         fontSize: '200px',
-        color: "#063591",
+        color: "#1DA58F",
         fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(1001);
 
@@ -369,7 +369,7 @@ function spawnItem() {
         item.setData('points', randomItem.points);
     }
     item.setOrigin(0.5);
-    item.setScale(0.4);
+    item.setScale(0.3);
     item.body.setAllowGravity(true);
     item.body.gravity.y = this.dropGravity;
     item.body.velocity.x = Phaser.Math.Between(-30, 30);
@@ -423,19 +423,22 @@ function catchItem(bowlContainer, item) {
             this.bowlStage = 1;
         }
 
-        // Floating score text animation
-        const scorePopup = this.add.text(this.scoreText.x + this.scoreText.width / 2 + 40, this.scoreText.y, `+${points}`, {
+        // Floating score text animation at the item's position (top right)
+        const scorePopup = this.add.text(
+            item.x + item.displayWidth / 2 + 20, // Top right of item
+            item.y - item.displayHeight / 2 - 20, // Top right of item
+            points > 0 ? `+${points}` : `${points}`, {
             fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec',
-            fontSize: '32px',
-            color: '#FFFF00', // Yellow color for visibility
-            fontStyle: 'bold'
+            fontSize: '80px',
+            color: points > 0 ? '#fff' : '#FF0000', // White for positive, red for negative
+            fontStyle: 'bold',
         }).setOrigin(0.5).setDepth(101);
 
         this.tweens.add({
             targets: scorePopup,
-            y: scorePopup.y - 100, // Move up
+            y: scorePopup.y - 40, // Move up less
             alpha: 0, // Fade out
-            duration: 1500,
+            duration: 500, // Faster disappear
             ease: 'Power1',
             onComplete: () => {
                 scorePopup.destroy();

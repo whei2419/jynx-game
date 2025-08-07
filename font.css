@@ -18,7 +18,7 @@ html, body {
   }
 
 
-  p, h1, h2, h3, h4, h5, h6 ,button, input, textarea {
+  p, h1, h2, h3, h4, h5, h6 ,button, input, textarea, div {
     font-family: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec', Arial, Helvetica, sans-serif;
     text-transform: uppercase;
     text-align: center;
@@ -31,7 +31,7 @@ html, body {
   border: 10px solid white;
   font-size: 48px;
   cursor: pointer;
-  width: 350px;
+  width: 388px;
   height: 110px;
   border-radius: 70px;
   display: flex;

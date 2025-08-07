@@ -26,36 +26,38 @@
 
         .name-input-container {
             position: absolute;
-            top: 25%;
+              top: 35%;
             left: 50%;
             transform: translate(-50%, -50%);
             background: white;
-            border-radius: 20px;
+            border-radius: 40px;
             padding: 30px 40px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
             text-align: center;
-            width: 400px;
+            width: 70vw;
+            border-bottom: 10px solid #037D68;
         }
 
         .title {
-            font-size: 24px;
-            color: #00A86B;
+            font-size: 44px;
+            color: #037D68;
             font-weight: bold;
-            margin-bottom: 20px;
+            margin: 40px 0;
         }
 
         .name-input {
             width: 90%;
-            padding: 12px 15px;
-            font-size: 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
+            padding: 16px 15px;
+            font-size: 44px;
+            border: 4px solid #e0e0e0;
+            border-radius: 15px;
             outline: none;
             text-align: center;
             margin: 0;
             background: #f5f5f5;
             color: #333;
             font-weight: bold;
+            margin-bottom: 20px;
         }
 
         .name-input:focus {
@@ -69,9 +71,10 @@
             left: 50%;
             transform: translateX(-50%);
             background: white;
-            border-radius: 15px;
             padding: 20px;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            width: 100vw;
+            border-bottom: 10px solid #037D68;
         }
 
         .keyboard-row {
@@ -81,20 +84,21 @@
         }
 
         .key {
-            width: 45px;
-            height: 45px;
-            margin: 3px;
+            width: 80px;
+            height: 80px;
+            margin: 6px;
             border: 2px solid #00A86B;
-            border-radius: 6px;
+            border-radius: 19px;
             background: white;
-            color: #333;
-            font-size: 16px;
+            color: #037D68;
+            font-size: 28px;
             font-weight: 500;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
+            border-bottom: 4px solid #037D68;
         }
 
         .key:hover {
@@ -110,12 +114,12 @@
         .key.special {
             background: #00A86B;
             color: white;
-            width: 65px;
-            font-size: 14px;
+            width: 120px;
+            font-size: 24px;
         }
 
         .key.space {
-            width: 180px;
+            width: 320px;
         }
 
         .buttoncontainer {
@@ -124,10 +128,21 @@
             left: 50%;
             transform: translateX(-50%);
         }
+        .logo-top {
+            position: absolute;
+            top: 4%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 348px;
+            height: auto;
+            object-fit: contain;
+            z-index: 1;
+        }
     </style>
 </head>
 
 <body>
+    <img class="logo-top" src="assets/dutch/logo.webp" alt="">
     <div id="text-loader" style="display: none;">Loading...</div>
     <div id="hand-cursor" class="hand-cursor"></div>
     <div id="debug">
