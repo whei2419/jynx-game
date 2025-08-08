@@ -35,6 +35,44 @@
 
         }
 
+        .progress-container {
+            position: absolute;
+            top: calc(51% + 28vw); /* Below the video */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 85vw;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+            z-index: 11;
+            backdrop-filter: blur(10px);
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00A86B 0%, #4fb8a8 100%);
+            border-radius: 18px;
+            transition: none;
+            position: relative;
+            width: 0%;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+            z-index: 12;
+            white-space: nowrap;
+        }
+
         .video {
             position: absolute;
             top: 0;
@@ -81,6 +119,57 @@
     <script>
         let selectedLang = ''; // default
         let hoverTimer = null;
+        let currentVideoIndex = 0;
+        const videos = [
+            { src: 'assets/video/cotton.mp4', text: 'THIS IS WHERE COTTON BLOOMS' },
+            { src: 'assets/video/cotton2.mp4', text: 'WHERE COTTON GROWS, DESERT RETREATS' }
+        ];
+
+        let animationId;
+
+        function updateProgressBar() {
+            const video = document.querySelector('.cotton-video');
+            const progressBar = document.querySelector('.progress-bar');
+            const progressText = document.querySelector('.progress-text');
+            
+            if (video && progressBar && progressText && !video.paused && !video.ended) {
+                const currentTime = video.currentTime;
+                const duration = video.duration;
+                
+                if (duration > 0) {
+                    const progressPercentage = (currentTime / duration) * 100;
+                    progressBar.style.width = progressPercentage + '%';
+                    
+                    // Set text based on current video
+                    progressText.textContent = videos[currentVideoIndex].text;
+                }
+                
+                // Continue animation
+                animationId = requestAnimationFrame(updateProgressBar);
+            }
+        }
+
+        function startProgressAnimation() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            updateProgressBar();
+        }
+
+        function playNextVideo() {
+            const video = document.querySelector('.cotton-video');
+            console.log('Playing next video, currentVideoIndex:', currentVideoIndex);
+            if (video && currentVideoIndex < videos.length - 1) {
+                currentVideoIndex++;
+                console.log('Switching to video:', videos[currentVideoIndex].src);
+                
+                video.src = videos[currentVideoIndex].src;
+                video.load();
+                video.play().then(() => {
+                    startProgressAnimation();
+                });
+            }
+        }
 
         window.onload = function () {
             const textLoader = document.getElementById('text-loader');
@@ -99,6 +188,47 @@
                 selectedLang = 'english';
             }
 
+            // Initialize progress bar updates and video sequence
+            const video = document.querySelector('.cotton-video');
+            if (video) {
+                video.addEventListener('play', startProgressAnimation);
+                video.addEventListener('pause', () => {
+                    if (animationId) {
+                        cancelAnimationFrame(animationId);
+                    }
+                });
+                video.addEventListener('loadedmetadata', () => {
+                    updateProgressBar();
+                });
+                
+                // Add event listener for when video ends
+                video.addEventListener('ended', function() {
+                    console.log('Video ended, currentVideoIndex:', currentVideoIndex);
+                    if (animationId) {
+                        cancelAnimationFrame(animationId);
+                    }
+                    
+                    if (currentVideoIndex === 0) {
+                        // First video ended, play second video
+                        playNextVideo();
+                    } else if (currentVideoIndex === 1) {
+                        // Second video ended, return to first video and loop
+                        currentVideoIndex = 0;
+                        console.log('Returning to first video');
+                        video.src = videos[currentVideoIndex].src;
+                        video.load();
+                        video.play().then(() => {
+                            startProgressAnimation();
+                        });
+                    }
+                });
+                
+                // Start animation when page loads
+                if (!video.paused) {
+                    startProgressAnimation();
+                }
+            }
+
             initHandTracking();
 
             // Add click event to entire page to go to join page
@@ -111,10 +241,17 @@
 
 <body>
     <div id="text-loader">Loading...</div>
-    <video class="cotton-video" autoplay loop muted playsinline>
+    <video class="cotton-video" autoplay muted playsinline>
         <source src="assets/video/cotton.mp4" type="video/mp4">
         Your browser does not support the video tag.
     </video>
+    
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar"></div>
+        <div class="progress-text">THIS IS WHERE COTTON BLOOMS</div>
+    </div>
+    
     <div id="hand-cursor" class="hand-cursor"></div>
     <div id="debug">
         <video id="video" playsinline></video>
