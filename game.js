@@ -54,8 +54,9 @@ function preload() {
     
     // Load good objects from folder and parse points from filename
     this.goodObjects = [
-        { key: 'goodObject_1_1', path: 'assets/dutch/fallingObjects/1.webp', points: -1 },
-        { key: 'goodObject_7_2', path: 'assets/dutch/fallingObjects/3.webp', points: 3 },
+        { key: 'goodObject_1_1', path: 'assets/dutch/fallingObjects/-3 point (1).webp', points: -3 },
+        { key: 'goodObject_1_2', path: 'assets/dutch/fallingObjects/-3 point (2).webp', points: -3 },
+        { key: 'goodObject_7_2', path: 'assets/dutch/fallingObjects/3.webp', points: 10 },
     ];
 
     this.goodObjects.forEach(obj => {
@@ -415,10 +416,10 @@ function catchItem(bowlContainer, item) {
         this.collectSound.play();
 
         // Change bowl image based on score
-        if (score > 10 && this.bowlStage < 2) {
+        if (score > 20 && this.bowlStage < 2) {
             this.bowl.setTexture('bowl_full');
             this.bowlStage = 2;
-        } else if (score > 3 && this.bowlStage < 1) {
+        } else if (score > 10 && this.bowlStage < 1) {
             this.bowl.setTexture('bowl_semi');
             this.bowlStage = 1;
         }

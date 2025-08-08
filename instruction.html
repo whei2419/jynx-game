@@ -8,11 +8,8 @@
     <link rel="stylesheet" href="font.css">
     <link rel="stylesheet" href="hand-tracking.css">
     <style>
-        .buttoncontainer {
-            position: absolute;
-            bottom: 15%;
-            left: 50%;
-            transform: translateX(-50%);
+        body {
+            cursor: pointer;
         }
     </style>
     <script>
@@ -23,20 +20,17 @@
             const lang = params.get('lang');
 
             const body = document.body;
-            const startButtonLink = document.getElementById('startButtonLink');
-            const startButtonText = document.getElementById('startButtonText');
 
             if (lang === 'chinese') {
                 body.style.backgroundImage = "url('assets/instructioncn.png')";
-                startButtonText.innerText = "我们走";
                 selectedLang = 'chinese';
             } else {
                 body.style.backgroundImage = "url('assets/dutch/instruction.webp')";
-                startButtonText.innerText = "START GAME";
                 selectedLang = 'english';
             }
 
-            startButtonLink.addEventListener('click', (e) => {
+            // Add click event to entire page to go to game
+            document.addEventListener('click', function(e) {
                 e.preventDefault();
                 const clickSound = new Audio('assets/SOUNDTRACK/select-sound.mp3');
                 clickSound.play();
@@ -56,12 +50,6 @@
     <div id="debug">
         <video id="video" playsinline></video>
         <canvas id="output"></canvas>
-    </div>
-    <div class="buttoncontainer">
-        <a id="startButtonLink" href="game.html" class="start-button" data-hover-effect="true">
-            <span id="startButtonText"></span>
-            <div class="progress-bar"></div>
-        </a>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
