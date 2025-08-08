@@ -109,7 +109,7 @@ function create() {
 
     // Set up bowl and enable physics
     this.bowl = this.add.sprite(0, 0, 'bowl').setOrigin(0.5);
-    this.bowl.setScale(1.0);
+    this.bowl.setScale(0.8);
     const bowlWidth = this.bowl.displayWidth;
     const bowlHeight = this.bowl.displayHeight;
 
@@ -369,7 +369,7 @@ function spawnItem() {
         item.setData('points', randomItem.points);
     }
     item.setOrigin(0.5);
-    item.setScale(0.3);
+    item.setScale(0.2);
     item.body.setAllowGravity(true);
     item.body.gravity.y = this.dropGravity;
     item.body.velocity.x = Phaser.Math.Between(-30, 30);
