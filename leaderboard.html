@@ -215,6 +215,60 @@
         font-size: 25px;
         text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
         border: 2px solid rgba(255, 255, 255, 0.6);
+        position: relative;
+      }
+
+      .rank-number.rank-1-image {
+        background: url('assets/dutch/rank1.webp') center center;
+        background-size: contain;
+        background-repeat: no-repeat;
+        border: none;
+        border-radius: 0;
+        color: white;
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+        font-size: 18px;
+      }
+
+      .rank-number.rank-2-image {
+        background: url('assets/dutch/rank2.webp') center center;
+        background-size: contain;
+        background-repeat: no-repeat;
+        border: none;
+        border-radius: 0;
+        color: white;
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+        font-size: 18px;
+      }
+
+      .rank-number.rank-3-image {
+        background: url('assets/dutch/rank3.webp') center center;
+        background-size: contain;
+        background-repeat: no-repeat;
+        border: none;
+        border-radius: 0;
+        color: white;
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+        font-size: 18px;
+      }
+
+      .rank-number.cloud-shape {
+        background: url('assets/dutch/rank4.webp') center center;
+        background-size: contain;
+        background-repeat: no-repeat;
+        border: none;
+        border-radius: 0;
+        color: white;
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+        font-size: 20px;
+      }
+
+      .rank-number.cloud-shape::before,
+      .rank-number.cloud-shape::after {
+        display: none;
       }
 
       .rank-other {
@@ -393,8 +447,25 @@
             item.classList.add("rank-other");
           }
 
+          // Determine rank class and display
+          let rankClass = '';
+          let rankDisplay = rank;
+          
+          if (rank === 1) {
+            rankClass = 'rank-1-image';
+            rankDisplay = '';
+          } else if (rank === 2) {
+            rankClass = 'rank-2-image';
+            rankDisplay = '';
+          } else if (rank === 3) {
+            rankClass = 'rank-3-image';
+            rankDisplay = '';
+          } else {
+            rankClass = 'cloud-shape';
+          }
+
           item.innerHTML = `
-                    <div class="rank-number">${rank === 1 ? '👑' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank}</div>
+                    <div class="rank-number ${rankClass}">${rankDisplay}</div>
                     <div class="player-name">${player.name}</div>
                     <div class="player-score">
                         ${player.score}
