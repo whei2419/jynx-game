@@ -4,19 +4,130 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Catch the Falling Items!</title>
+  
+  <!-- Immediate background to prevent black flash -->
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to bottom, #3B8DCB, #6EB0E0) !important;
+      height: 100vh;
+      overflow: hidden;
+    }
+  </style>
+  
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="font.css">
+  <style>
+    /* Loading screen styles */
+    #loadingScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to bottom, #3B8DCB, #6EB0E0);
+      background-image: url('assets/dutch/start1.webp');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: 10000;
+      transition: opacity 0.5s ease-out;
+    }
+
+    #loadingScreen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Ensure game container is hidden initially */
+    #gameContainer {
+      opacity: 0;
+      transition: opacity 0.5s ease-in;
+      background: linear-gradient(to bottom, #3B8DCB, #6EB0E0);
+      width: 100%;
+      height: 100%;
+    }
+
+    #gameContainer.loaded {
+      opacity: 1;
+    }
+
+    /* Prevent any white flash */
+    body, html {
+      background: linear-gradient(to bottom, #3B8DCB, #6EB0E0) !important;
+    }
+  </style>
   <!-- TensorFlow and PoseNet for body tracking -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.14.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet@2.2.2"></script>
   <!-- Phaser game engine -->
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+  
+  <!-- Immediate script to show loading screen -->
+  <script>
+    // Ensure loading screen shows immediately
+    document.addEventListener('DOMContentLoaded', function() {
+      const loadingScreen = document.getElementById('loadingScreen');
+      if (loadingScreen) {
+        loadingScreen.style.display = 'flex';
+      }
+    });
+  </script>
 </head>
-<body>
+<body style="background: linear-gradient(to bottom, #3B8DCB, #6EB0E0) !important; margin: 0; padding: 0;">
+    <!-- Loading Screen -->
+    <div id="loadingScreen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, #3B8DCB, #6EB0E0); background-image: url('assets/dutch/start1.webp'); background-size: cover; background-position: center; background-repeat: no-repeat; display: flex; justify-content: center; align-items: center; z-index: 10000;">
+    </div>
+
     <div id="gameContainer">
        <img class="logo-top" src="assets/dutch/logo.webp" alt="">
     </div>
 
+    <script>
+      // Hide loading screen when countdown starts (game is ready)
+      window.gameLoaded = function() {
+        const loadingScreen = document.getElementById('loadingScreen');
+        const gameContainer = document.getElementById('gameContainer');
+        
+        if (loadingScreen && !loadingScreen.classList.contains('hidden')) {
+          // Fade out loading screen
+          loadingScreen.classList.add('hidden');
+          
+          // Fade in game container
+          gameContainer.classList.add('loaded');
+          
+          // Remove loading screen completely after transition
+          setTimeout(function() {
+            loadingScreen.style.display = 'none';
+          }, 500);
+        }
+      };
+
+      // Immediate script to show loading screen
+      document.addEventListener('DOMContentLoaded', function() {
+        const loadingScreen = document.getElementById('loadingScreen');
+        if (loadingScreen) {
+          loadingScreen.style.display = 'block';
+        }
+      });
+
+      // Fallback: Hide loading screen after maximum wait time
+      setTimeout(function() {
+        const loadingScreen = document.getElementById('loadingScreen');
+        const gameContainer = document.getElementById('gameContainer');
+        
+        if (loadingScreen && !loadingScreen.classList.contains('hidden')) {
+          loadingScreen.classList.add('hidden');
+          gameContainer.classList.add('loaded');
+          
+          setTimeout(function() {
+            loadingScreen.style.display = 'none';
+          }, 500);
+        }
+      }, 8000); // 8 second fallback
+    </script>
+    
     <script src="simpleBodyTracking.js"></script>
     <script src="game.js"></script>
 </body>

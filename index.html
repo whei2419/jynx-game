@@ -15,6 +15,7 @@
             background-size: cover;
             background-position: center;
             position: relative;
+            transition: background-image 1s ease-in-out;
         }
 
         .start-button {
@@ -22,55 +23,16 @@
         }
 
         .cotton-video {
-                position: absolute;
-        top: 51%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 100%;
-        max-width: 92vw;
-        height: auto;
-        border-radius: 20px;
-        z-index: 10;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-
-        }
-
-        .progress-container {
             position: absolute;
-            top: calc(51% + 28vw); /* Below the video */
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 85vw;
-            height: 40px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            overflow: hidden;
-            z-index: 11;
-            backdrop-filter: blur(10px);
-        }
-
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #00A86B 0%, #4fb8a8 100%);
-            border-radius: 18px;
-            transition: none;
-            position: relative;
-            width: 0%;
-        }
-
-        .progress-text {
-            position: absolute;
-            top: 50%;
+            top: 51%;
             left: 50%;
             transform: translate(-50%, -50%);
-            color: white;
-            font-weight: bold;
-            font-size: 14px;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
-            z-index: 12;
-            white-space: nowrap;
+            width: 100%;
+            max-width: 92vw;
+            height: auto;
+            border-radius: 20px;
+            z-index: 10;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
         }
 
         .video {
@@ -121,39 +83,16 @@
         let hoverTimer = null;
         let currentVideoIndex = 0;
         const videos = [
-            { src: 'assets/video/cotton.mp4', text: 'THIS IS WHERE COTTON BLOOMS' },
-            { src: 'assets/video/cotton2.mp4', text: 'WHERE COTTON GROWS, DESERT RETREATS' }
+            { src: 'assets/video/cotton.mp4', background: 'assets/dutch/index.webp' },
+            { src: 'assets/video/cotton2.mp4', background: 'assets/dutch/index1.webp' }
         ];
 
-        let animationId;
-
-        function updateProgressBar() {
+        function updateBackgroundForVideo() {
+            const body = document.body;
             const video = document.querySelector('.cotton-video');
-            const progressBar = document.querySelector('.progress-bar');
-            const progressText = document.querySelector('.progress-text');
             
-            if (video && progressBar && progressText && !video.paused && !video.ended) {
-                const currentTime = video.currentTime;
-                const duration = video.duration;
-                
-                if (duration > 0) {
-                    const progressPercentage = (currentTime / duration) * 100;
-                    progressBar.style.width = progressPercentage + '%';
-                    
-                    // Set text based on current video
-                    progressText.textContent = videos[currentVideoIndex].text;
-                }
-                
-                // Continue animation
-                animationId = requestAnimationFrame(updateProgressBar);
-            }
-        }
-
-        function startProgressAnimation() {
-            if (animationId) {
-                cancelAnimationFrame(animationId);
-            }
-            updateProgressBar();
+            // Set background based on current video with smooth transition
+            body.style.backgroundImage = `url('${videos[currentVideoIndex].background}')`;
         }
 
         function playNextVideo() {
@@ -163,11 +102,13 @@
                 currentVideoIndex++;
                 console.log('Switching to video:', videos[currentVideoIndex].src);
                 
+                // Update background smoothly
+                updateBackgroundForVideo();
+                
+                // Change video source immediately
                 video.src = videos[currentVideoIndex].src;
                 video.load();
-                video.play().then(() => {
-                    startProgressAnimation();
-                });
+                video.play();
             }
         }
 
@@ -184,29 +125,16 @@
                 body.style.backgroundImage = "url('assets/startcn.png')";
                 selectedLang = 'chinese';
             } else {
-                body.style.backgroundImage = "url('assets/dutch/index.webp')"; 
+                // Set initial background for first video
+                body.style.backgroundImage = `url('${videos[0].background}')`;
                 selectedLang = 'english';
             }
 
-            // Initialize progress bar updates and video sequence
             const video = document.querySelector('.cotton-video');
             if (video) {
-                video.addEventListener('play', startProgressAnimation);
-                video.addEventListener('pause', () => {
-                    if (animationId) {
-                        cancelAnimationFrame(animationId);
-                    }
-                });
-                video.addEventListener('loadedmetadata', () => {
-                    updateProgressBar();
-                });
-                
                 // Add event listener for when video ends
                 video.addEventListener('ended', function() {
                     console.log('Video ended, currentVideoIndex:', currentVideoIndex);
-                    if (animationId) {
-                        cancelAnimationFrame(animationId);
-                    }
                     
                     if (currentVideoIndex === 0) {
                         // First video ended, play second video
@@ -215,18 +143,16 @@
                         // Second video ended, return to first video and loop
                         currentVideoIndex = 0;
                         console.log('Returning to first video');
+                        
+                        // Update background smoothly
+                        updateBackgroundForVideo();
+                        
+                        // Change video source immediately
                         video.src = videos[currentVideoIndex].src;
                         video.load();
-                        video.play().then(() => {
-                            startProgressAnimation();
-                        });
+                        video.play();
                     }
                 });
-                
-                // Start animation when page loads
-                if (!video.paused) {
-                    startProgressAnimation();
-                }
             }
 
             initHandTracking();
@@ -245,12 +171,6 @@
         <source src="assets/video/cotton.mp4" type="video/mp4">
         Your browser does not support the video tag.
     </video>
-    
-    <!-- Progress Bar -->
-    <div class="progress-container">
-        <div class="progress-bar"></div>
-        <div class="progress-text">THIS IS WHERE COTTON BLOOMS</div>
-    </div>
     
     <div id="hand-cursor" class="hand-cursor"></div>
     <div id="debug">

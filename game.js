@@ -52,14 +52,22 @@ function preload() {
     this.load.image('backgroundCh', 'assets/bgCh.png');
     this.load.image('gamebg', 'assets/dutch/start1.webp');  
     
-    // Load good objects from folder and parse points from filename
-    this.goodObjects = [
-        { key: 'goodObject_1_1', path: 'assets/dutch/fallingObjects/-3 point (1).webp', points: -3 },
-        { key: 'goodObject_1_2', path: 'assets/dutch/fallingObjects/-3 point (2).webp', points: -3 },
-        { key: 'goodObject_7_2', path: 'assets/dutch/fallingObjects/3.webp', points: 10 },
+    // Load objects and separate into positive and negative arrays
+    this.negativeObjects = [
+        { key: 'negativeObject_1', path: 'assets/dutch/fallingObjects/-3 point (1).webp', points: -3 },
+        { key: 'negativeObject_2', path: 'assets/dutch/fallingObjects/-3 point (2).webp', points: -3 },
+    ];
+    
+    this.positiveObjects = [
+        { key: 'positiveObject_1', path: 'assets/dutch/fallingObjects/3.webp', points: 10 },
     ];
 
-    this.goodObjects.forEach(obj => {
+    // Load all objects
+    this.negativeObjects.forEach(obj => {
+        this.load.image(obj.key, obj.path);
+    });
+    
+    this.positiveObjects.forEach(obj => {
         this.load.image(obj.key, obj.path);
     });
 
@@ -104,6 +112,11 @@ function create() {
  
     this.countdownSound.play();
 
+    // Hide loading screen since game is now ready
+    if (window.gameLoaded) {
+        window.gameLoaded();
+    }
+
     this.background = this.add.image(0, 0, 'gamebg').setOrigin(0, 0);
     this.background.displayWidth = this.cameras.main.width;
     this.background.displayHeight = this.cameras.main.height;
@@ -124,12 +137,15 @@ function create() {
  
     this.spawnDelay = 1200; // Initial spawn delay (ms)
     this.dropGravity = 300; // Initial gravity for falling items
-    this.spawnAcceleration = 0.98; // How much to multiply spawnDelay each interval (slower acceleration)
-    this.gravityAcceleration = 1.03; // How much to multiply dropGravity each interval (slower acceleration)
-    this.minSpawnDelay = 600; // Minimum spawn delay (slower minimum)
-    this.maxDropGravity = 900; // Maximum gravity (slower max)
+    this.spawnAcceleration = 0.95; // How much to multiply spawnDelay each interval (faster acceleration)
+    this.gravityAcceleration = 1.05; // How much to multiply dropGravity each interval (faster acceleration)
+    this.minSpawnDelay = 400; // Minimum spawn delay (faster minimum)
+    this.maxDropGravity = 1200; // Maximum gravity (faster max)
     this.isGameOver = false; // Track game over state
     this.bowlStage = 0; // Track bowl stage: 0=empty, 1=semi, 2=full
+    
+    // 50:50 spawn control
+    this.spawnCounter = 0; // Counter to alternate between positive and negative objects
 
     // Create a physics group for falling items
     this.items = this.physics.add.group();
@@ -339,9 +355,11 @@ function update() {
 
 function spawnItem() {
     if (this.isGameOver) return; // Prevent spawning after game ends
-    // Adjust spawn delay and drop gravity over time
+    
+    // Adjust spawn delay and drop gravity over time (make it faster)
     this.spawnDelay = Math.max(this.minSpawnDelay, this.spawnDelay * this.spawnAcceleration);
     this.dropGravity = Math.min(this.maxDropGravity, this.dropGravity * this.gravityAcceleration);
+    
     if (this.spawnItemEvent) {
         this.spawnItemEvent.remove();
     }
@@ -352,23 +370,35 @@ function spawnItem() {
         loop: false
     });
 
-    // Always spawn a good object
-    var randomItem = Phaser.Math.RND.pick(this.goodObjects);
-    randomItem.isGood = true;
+    // 50:50 spawn logic - alternate between positive and negative
+    var randomItem;
+    var isPositive = (this.spawnCounter % 2 === 0);
+    
+    if (isPositive) {
+        // Spawn positive object
+        randomItem = Phaser.Math.RND.pick(this.positiveObjects);
+        randomItem.isGood = true;
+    } else {
+        // Spawn negative object  
+        randomItem = Phaser.Math.RND.pick(this.negativeObjects);
+        randomItem.isGood = false; // Negative objects are "bad"
+    }
+    
+    // Increment counter for next spawn
+    this.spawnCounter++;
 
     // Calculate item width for safe spawn
     const texture = this.textures.get(randomItem.key);
     const frame = texture.getSourceImage ? texture.getSourceImage() : null;
-    const itemWidth = frame ? frame.width * 0.4 : 100 * 0.4; // 0.4 is your scale
+    const itemWidth = frame ? frame.width * 0.2 : 100 * 0.2; // 0.2 is your scale
     const minX = itemWidth / 2;
     const maxX = this.cameras.main.width - itemWidth / 2;
     var x = Phaser.Math.Between(minX, maxX);
     var y = -100;
     var item = this.items.create(x, y, randomItem.key);
+    
     item.isGood = randomItem.isGood;
-    if (randomItem.isGood) {
-        item.setData('points', randomItem.points);
-    }
+    item.setData('points', randomItem.points);
     item.setOrigin(0.5);
     item.setScale(0.2);
     item.body.setAllowGravity(true);
@@ -424,22 +454,19 @@ function catchItem(bowlContainer, item) {
             this.bowlStage = 1;
         }
 
-        // Floating score text animation at the item's position (top right)
-        const scorePopup = this.add.text(
-            item.x + item.displayWidth / 2 + 20, // Top right of item
-            item.y - item.displayHeight / 2 - 20, // Top right of item
-            points > 0 ? `+${points}` : `${points}`, {
+        // Floating score text animation
+        const scorePopup = this.add.text(this.scoreText.x + this.scoreText.width / 2 + 40, this.scoreText.y, `+${points}`, {
             fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec',
-            fontSize: '80px',
-            color: points > 0 ? '#fff' : '#FF0000', // White for positive, red for negative
-            fontStyle: 'bold',
+            fontSize: '32px',
+            color: '#FFFF00', // Yellow color for visibility
+            fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(101);
 
         this.tweens.add({
             targets: scorePopup,
-            y: scorePopup.y - 40, // Move up less
+            y: scorePopup.y - 100, // Move up
             alpha: 0, // Fade out
-            duration: 500, // Faster disappear
+            duration: 1500,
             ease: 'Power1',
             onComplete: () => {
                 scorePopup.destroy();
