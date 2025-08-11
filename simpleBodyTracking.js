@@ -45,7 +45,7 @@ class SimpleBodyTracker {
             this.video.style.borderRadius = '8px';
             this.video.style.zIndex = '9999';
             this.video.style.transform = 'scaleX(-1)'; // Mirror the video for natural view
-            this.video.style.display = 'none'; // Hide for production
+            this.video.style.display = 'block'; // Hide for production
             
             document.body.appendChild(this.video);
 
@@ -61,7 +61,7 @@ class SimpleBodyTracker {
             this.skeletonCanvas.style.zIndex = '10000'; // Above video
             this.skeletonCanvas.style.pointerEvents = 'none';
             this.skeletonCanvas.style.transform = 'scaleX(-1)'; // Mirror to match video
-            this.skeletonCanvas.style.display = 'none'; // Hide for production
+            this.skeletonCanvas.style.display = 'block'; // Hide for production
             
             document.body.appendChild(this.skeletonCanvas);
             this.skeletonCtx = this.skeletonCanvas.getContext('2d');
