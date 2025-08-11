@@ -21,10 +21,10 @@ class SimpleBodyTracker {
         
         // Person persistence tracking
         this.consecutiveDetections = 0;
-        this.minConsecutiveFrames = 3; // Must detect same person for 3 frames before switching
+        this.minConsecutiveFrames = 2; // Reduced from 3 to 2 for faster response
         this.lastValidPose = null;
         this.noDetectionFrames = 0;
-        this.maxNoDetectionFrames = 10; // Clear tracking after 10 frames of no detection
+        this.maxNoDetectionFrames = 15; // Increased from 10 to 15 for more stability
     }
 
     async initialize() {
@@ -141,12 +141,26 @@ class SimpleBodyTracker {
                     this.drawSkeleton(pose.keypoints);
                     this.lastValidPose = pose.keypoints;
                     this.noDetectionFrames = 0;
+                    
+                    // Debug logging every 30 frames (roughly once per second)
+                    if (Math.random() < 0.033) {
+                        console.log('Body tracking active:', {
+                            bodyX: window.bodyX?.toFixed(0),
+                            shoulderX: window.shoulderX?.toFixed(0),
+                            consecutiveDetections: this.consecutiveDetections
+                        });
+                    }
                 }
                 
             } else {
                 // No valid person detected
                 this.consecutiveDetections = 0;
                 this.noDetectionFrames++;
+                
+                // Debug logging for detection failures
+                if (this.noDetectionFrames === 5) { // Log once when we start losing detection
+                    console.log('Body tracking lost person, frames without detection:', this.noDetectionFrames);
+                }
                 
                 // Clear tracking data if no valid person for too long
                 if (this.noDetectionFrames >= this.maxNoDetectionFrames) {
@@ -155,6 +169,10 @@ class SimpleBodyTracker {
                     window.hipX = null;
                     window.handX = null;
                     this.lastValidPose = null;
+                    
+                    if (this.noDetectionFrames === this.maxNoDetectionFrames) { // Log once when clearing
+                        console.log('Body tracking cleared due to prolonged detection failure');
+                    }
                 }
             }
 
@@ -216,18 +234,18 @@ class SimpleBodyTracker {
         const leftHip = getKeypoint('leftHip');
         const rightHip = getKeypoint('rightHip');
         
-        // Higher confidence threshold to ensure we're tracking the primary person
-        const minConfidence = 0.5;
+        // Relaxed confidence threshold for better detection
+        const minConfidence = 0.3; // Lowered from 0.5
         
-        // Must have at least 3 core body parts with high confidence
+        // Must have at least 2 core body parts with decent confidence (relaxed from 3)
         const highConfidencePoints = [nose, leftShoulder, rightShoulder, leftHip, rightHip]
             .filter(point => point && point.score > minConfidence);
         
-        if (highConfidencePoints.length < 3) {
+        if (highConfidencePoints.length < 2) {
             return false;
         }
         
-        // Check if person is reasonably centered (closest person usually appears centered)
+        // Check if person has detectable shoulders (most reliable indicator)
         if (leftShoulder && rightShoulder && 
             leftShoulder.score > minConfidence && rightShoulder.score > minConfidence) {
             
@@ -235,29 +253,38 @@ class SimpleBodyTracker {
             const videoWidth = 257;
             const centerRatio = shoulderCenterX / videoWidth; // 0 to 1
             
-            // Person should be reasonably centered (closest person is usually in center)
-            if (centerRatio < 0.25 || centerRatio > 0.75) {
+            // More permissive centering (relaxed from 0.25-0.75 to 0.15-0.85)
+            if (centerRatio < 0.15 || centerRatio > 0.85) {
                 return false;
             }
             
-            // Shoulder distance indicates closeness to camera
+            // Shoulder distance indicates closeness to camera (relaxed threshold)
             const shoulderDistance = Math.abs(leftShoulder.position.x - rightShoulder.position.x);
             
-            // Must be close enough (shoulder distance should be substantial)
-            if (shoulderDistance < 40) { // Increased from 30 - person too far away
+            // More permissive distance check (lowered from 40 to 25)
+            if (shoulderDistance < 25) {
                 return false;
             }
             
-            // Additional check: person should occupy reasonable portion of frame
+            // More permissive Y position check (relaxed range)
             const shoulderY = (leftShoulder.position.y + rightShoulder.position.y) / 2;
-            if (shoulderY < 30 || shoulderY > 160) { // Person too high or too low in frame
+            if (shoulderY < 20 || shoulderY > 170) { // More permissive range
+                return false;
+            }
+        } else {
+            // If no good shoulders, check for at least a nose or one shoulder
+            const hasValidDetection = (nose && nose.score > minConfidence) || 
+                                    (leftShoulder && leftShoulder.score > minConfidence) ||
+                                    (rightShoulder && rightShoulder.score > minConfidence);
+            
+            if (!hasValidDetection) {
                 return false;
             }
         }
         
-        // Check overall pose confidence - closest person should have highest overall confidence
+        // More permissive overall confidence check (lowered from 0.35 to 0.25)
         const averageConfidence = keypoints.reduce((sum, kp) => sum + kp.score, 0) / keypoints.length;
-        if (averageConfidence < 0.35) { // Minimum overall confidence
+        if (averageConfidence < 0.25) {
             return false;
         }
         
