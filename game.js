@@ -454,19 +454,25 @@ function catchItem(bowlContainer, item) {
             this.bowlStage = 1;
         }
 
-        // Floating score text animation
-        const scorePopup = this.add.text(this.scoreText.x + this.scoreText.width / 2 + 40, this.scoreText.y, `+${points}`, {
+        // Floating score text animation - show correct sign for positive/negative
+        const pointsText = points > 0 ? `+${points}` : `${points}`; // Don't add + for negative numbers
+        const textColor = points > 0 ? '#00FF00' : '#FF0000'; // Green for positive, red for negative
+        
+        // Show floating text at the item's position (where it was caught)
+        const scorePopup = this.add.text(item.x, item.y, pointsText, {
             fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec',
-            fontSize: '32px',
-            color: '#FFFF00', // Yellow color for visibility
-            fontStyle: 'bold'
+            fontSize: '48px', // Made bigger for better visibility
+            color: textColor,
+            fontStyle: 'bold',
+            stroke: '#000000', // Black outline for better visibility
+            strokeThickness: 3
         }).setOrigin(0.5).setDepth(101);
 
         this.tweens.add({
             targets: scorePopup,
-            y: scorePopup.y - 100, // Move up
+            y: scorePopup.y - 150, // Move up more
             alpha: 0, // Fade out
-            duration: 1500,
+            duration: 2000, // Slightly longer duration
             ease: 'Power1',
             onComplete: () => {
                 scorePopup.destroy();
