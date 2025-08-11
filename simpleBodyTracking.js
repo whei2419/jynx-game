@@ -18,6 +18,13 @@ class SimpleBodyTracker {
         this.bufferSize = 5; // Number of frames to average
         this.velocitySmoothing = 0.15; // How much to smooth velocity changes
         this.lastVelocity = 0;
+        
+        // Person persistence tracking
+        this.consecutiveDetections = 0;
+        this.minConsecutiveFrames = 3; // Must detect same person for 3 frames before switching
+        this.lastValidPose = null;
+        this.noDetectionFrames = 0;
+        this.maxNoDetectionFrames = 10; // Clear tracking after 10 frames of no detection
     }
 
     async initialize() {
@@ -118,10 +125,37 @@ class SimpleBodyTracker {
                 decodingMethod: 'single-person'
             });
 
-            // Additional filtering: only process if we have high-confidence core keypoints
-            if (pose && pose.keypoints && this.isValidPrimaryPerson(pose.keypoints)) {
-                this.updateBodyPositions(pose.keypoints);
-                this.drawSkeleton(pose.keypoints); // Draw skeleton overlay
+            // Check if we have a valid closest person
+            if (pose && pose.keypoints && this.isClosestPersonToCamera(pose.keypoints)) {
+                
+                // Check if this is the same person we were tracking (persistence check)
+                if (this.isSamePerson(pose.keypoints, this.lastValidPose)) {
+                    this.consecutiveDetections++;
+                } else {
+                    this.consecutiveDetections = 1; // Reset counter for new person
+                }
+                
+                // Only update tracking if we've consistently detected this person
+                if (this.consecutiveDetections >= this.minConsecutiveFrames) {
+                    this.updateBodyPositions(pose.keypoints);
+                    this.drawSkeleton(pose.keypoints);
+                    this.lastValidPose = pose.keypoints;
+                    this.noDetectionFrames = 0;
+                }
+                
+            } else {
+                // No valid person detected
+                this.consecutiveDetections = 0;
+                this.noDetectionFrames++;
+                
+                // Clear tracking data if no valid person for too long
+                if (this.noDetectionFrames >= this.maxNoDetectionFrames) {
+                    window.bodyX = null;
+                    window.shoulderX = null;
+                    window.hipX = null;
+                    window.handX = null;
+                    this.lastValidPose = null;
+                }
             }
 
         } catch (error) {
@@ -134,46 +168,97 @@ class SimpleBodyTracker {
         }, 33); // ~30fps instead of 20fps for better responsiveness
     }
 
-    // Validate that this is the primary person we want to track (not background people)
-    isValidPrimaryPerson(keypoints) {
+    // Check if the detected person is the same as previously tracked person
+    isSamePerson(currentKeypoints, lastKeypoints) {
+        if (!lastKeypoints) return true; // First detection
+        
+        const getKeypoint = (keypoints, name) => keypoints.find(kp => kp.part === name);
+        
+        // Compare shoulder positions to determine if it's the same person
+        const currentLeftShoulder = getKeypoint(currentKeypoints, 'leftShoulder');
+        const currentRightShoulder = getKeypoint(currentKeypoints, 'rightShoulder');
+        const lastLeftShoulder = getKeypoint(lastKeypoints, 'leftShoulder');
+        const lastRightShoulder = getKeypoint(lastKeypoints, 'rightShoulder');
+        
+        if (currentLeftShoulder && currentRightShoulder && lastLeftShoulder && lastRightShoulder) {
+            // Calculate center positions
+            const currentCenter = {
+                x: (currentLeftShoulder.position.x + currentRightShoulder.position.x) / 2,
+                y: (currentLeftShoulder.position.y + currentRightShoulder.position.y) / 2
+            };
+            
+            const lastCenter = {
+                x: (lastLeftShoulder.position.x + lastRightShoulder.position.x) / 2,
+                y: (lastLeftShoulder.position.y + lastRightShoulder.position.y) / 2
+            };
+            
+            // Calculate distance moved
+            const distance = Math.sqrt(
+                Math.pow(currentCenter.x - lastCenter.x, 2) + 
+                Math.pow(currentCenter.y - lastCenter.y, 2)
+            );
+            
+            // If person moved too much, it might be a different person
+            return distance < 50; // Threshold for "same person"
+        }
+        
+        return true; // Default to same person if we can't compare
+    }
+
+    // Determine if this is the closest person to the camera
+    isClosestPersonToCamera(keypoints) {
         const getKeypoint = (name) => keypoints.find(kp => kp.part === name);
         
         // Get core keypoints for validation
         const nose = getKeypoint('nose');
         const leftShoulder = getKeypoint('leftShoulder');
         const rightShoulder = getKeypoint('rightShoulder');
+        const leftHip = getKeypoint('leftHip');
+        const rightHip = getKeypoint('rightHip');
         
-        // Require high confidence on core keypoints to avoid tracking background people
-        const minConfidence = 0.4; // Higher threshold for primary person detection
+        // Higher confidence threshold to ensure we're tracking the primary person
+        const minConfidence = 0.5;
         
-        // Must have nose OR both shoulders with high confidence
-        const hasValidHead = nose && nose.score > minConfidence;
-        const hasValidShoulders = leftShoulder && rightShoulder && 
-                                 leftShoulder.score > minConfidence && 
-                                 rightShoulder.score > minConfidence;
+        // Must have at least 3 core body parts with high confidence
+        const highConfidencePoints = [nose, leftShoulder, rightShoulder, leftHip, rightHip]
+            .filter(point => point && point.score > minConfidence);
         
-        // Accept if we have either a clear head OR clear shoulders
-        if (!hasValidHead && !hasValidShoulders) {
+        if (highConfidencePoints.length < 3) {
             return false;
         }
         
-        // Additional check: person should be reasonably centered and close to camera
-        // (helps filter out people in background or edges)
-        if (hasValidShoulders) {
+        // Check if person is reasonably centered (closest person usually appears centered)
+        if (leftShoulder && rightShoulder && 
+            leftShoulder.score > minConfidence && rightShoulder.score > minConfidence) {
+            
             const shoulderCenterX = (leftShoulder.position.x + rightShoulder.position.x) / 2;
             const videoWidth = 257;
             const centerRatio = shoulderCenterX / videoWidth; // 0 to 1
             
-            // Person should be somewhat centered (not completely at edges)
-            if (centerRatio < 0.2 || centerRatio > 0.8) {
+            // Person should be reasonably centered (closest person is usually in center)
+            if (centerRatio < 0.25 || centerRatio > 0.75) {
                 return false;
             }
             
-            // Shoulders should be reasonably sized (not too small = far away)
+            // Shoulder distance indicates closeness to camera
             const shoulderDistance = Math.abs(leftShoulder.position.x - rightShoulder.position.x);
-            if (shoulderDistance < 30) { // Too small = probably background person
+            
+            // Must be close enough (shoulder distance should be substantial)
+            if (shoulderDistance < 40) { // Increased from 30 - person too far away
                 return false;
             }
+            
+            // Additional check: person should occupy reasonable portion of frame
+            const shoulderY = (leftShoulder.position.y + rightShoulder.position.y) / 2;
+            if (shoulderY < 30 || shoulderY > 160) { // Person too high or too low in frame
+                return false;
+            }
+        }
+        
+        // Check overall pose confidence - closest person should have highest overall confidence
+        const averageConfidence = keypoints.reduce((sum, kp) => sum + kp.score, 0) / keypoints.length;
+        if (averageConfidence < 0.35) { // Minimum overall confidence
+            return false;
         }
         
         return true;
