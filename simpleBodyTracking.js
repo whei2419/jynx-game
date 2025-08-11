@@ -32,53 +32,53 @@ class SimpleBodyTracker {
             // Load PoseNet model with optimized settings for performance
             this.net = await posenet.load({
                 architecture: 'MobileNetV1',
-                outputStride: 16, // Use 16 for better compatibility
-                inputResolution: { width: 257, height: 193 }, // Even smaller resolution for better performance
-                multiplier: 0.5 // Fastest multiplier for outputStride 16
+                outputStride: 16, // Keep at 16 for stability
+                inputResolution: { width: 193, height: 145 }, // Reduced resolution further for speed
+                multiplier: 0.5 // Fastest multiplier
             });
 
             // Set up camera with lower resolution for better performance
             this.video = document.createElement('video');
-            this.video.width = 257; // Match the input resolution
-            this.video.height = 193;
+            this.video.width = 193; // Match the input resolution
+            this.video.height = 145;
             
             // Style the video for debug display at top of screen
             this.video.style.position = 'fixed';
             this.video.style.top = '10px';
             this.video.style.right = '10px';
-            this.video.style.width = '200px';
-            this.video.style.height = '150px';
+            this.video.style.width = '180px';
+            this.video.style.height = '135px';
             this.video.style.border = '2px solid #00ff00';
             this.video.style.borderRadius = '8px';
             this.video.style.zIndex = '9999';
             this.video.style.transform = 'scaleX(-1)'; // Mirror the video for natural view
-            this.video.style.display = 'block'; // Hide for production
+            this.video.style.display = 'block'; // Hidden by default for performance
             
             document.body.appendChild(this.video);
 
             // Create canvas overlay for skeleton visualization
             this.skeletonCanvas = document.createElement('canvas');
-            this.skeletonCanvas.width = 200; // Match video display size
-            this.skeletonCanvas.height = 150;
+            this.skeletonCanvas.width = 180; // Match video display size
+            this.skeletonCanvas.height = 135;
             this.skeletonCanvas.style.position = 'fixed';
             this.skeletonCanvas.style.top = '10px';
             this.skeletonCanvas.style.right = '10px';
-            this.skeletonCanvas.style.width = '200px';
-            this.skeletonCanvas.style.height = '150px';
+            this.skeletonCanvas.style.width = '180px';
+            this.skeletonCanvas.style.height = '135px';
             this.skeletonCanvas.style.zIndex = '10000'; // Above video
             this.skeletonCanvas.style.pointerEvents = 'none';
             this.skeletonCanvas.style.transform = 'scaleX(-1)'; // Mirror to match video
-            this.skeletonCanvas.style.display = 'block'; // Hide for production
+            this.skeletonCanvas.style.display = 'block'; // Hidden by default for performance
             
             document.body.appendChild(this.skeletonCanvas);
             this.skeletonCtx = this.skeletonCanvas.getContext('2d');
 
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: { 
-                    width: 257, 
-                    height: 193,
+                    width: 193, 
+                    height: 145,
                     facingMode: 'user',
-                    frameRate: { ideal: 20, max: 20 } // Reduced from 30 to 20 fps
+                    frameRate: { ideal: 15, max: 20 } // Reduced from 20 to 15 fps for better performance
                 }
             });
             
@@ -91,11 +91,7 @@ class SimpleBodyTracker {
             }, 1000);
 
             this.isInitialized = true;
-            console.log('Simple body tracking initialized successfully (optimized for performance)');
-            
-            // Debug info and video hidden for production
-            // Uncomment the line below to show debug info for development
-            // this.showDebugInfo();
+            console.log('Simple body tracking initialized (optimized for multi-person performance)');
             
             // Add keyboard shortcuts for debug controls
             document.addEventListener('keydown', (event) => {
@@ -119,17 +115,37 @@ class SimpleBodyTracker {
         }
 
         try {
-            // Use estimateSinglePose to detect only the most prominent person
-            const pose = await this.net.estimateSinglePose(this.video, {
+            // Use multi-person detection to find the best candidate
+            const poses = await this.net.estimatePoses(this.video, {
                 flipHorizontal: true,
-                decodingMethod: 'single-person'
+                decodingMethod: 'multi-person',
+                maxDetections: 3, // Limit to 3 people max for performance
+                scoreThreshold: 0.3,
+                nmsRadius: 30
             });
 
-            // Check if we have a valid closest person
-            if (pose && pose.keypoints && this.isClosestPersonToCamera(pose.keypoints)) {
-                
+            // Filter and rank poses to find the closest person
+            let bestPose = null;
+            let bestScore = 0;
+
+            if (poses && poses.length > 0) {
+                for (const pose of poses) {
+                    if (!pose.keypoints || pose.score < 0.2) continue;
+                    
+                    // Calculate a composite score for "closest person"
+                    const proximityScore = this.calculateProximityScore(pose.keypoints);
+                    
+                    if (proximityScore > bestScore && this.isClosestPersonToCamera(pose.keypoints)) {
+                        bestScore = proximityScore;
+                        bestPose = pose;
+                    }
+                }
+            }
+
+            // Process the best pose if found
+            if (bestPose) {
                 // Check if this is the same person we were tracking (persistence check)
-                if (this.isSamePerson(pose.keypoints, this.lastValidPose)) {
+                if (this.isSamePerson(bestPose.keypoints, this.lastValidPose)) {
                     this.consecutiveDetections++;
                 } else {
                     this.consecutiveDetections = 1; // Reset counter for new person
@@ -137,53 +153,72 @@ class SimpleBodyTracker {
                 
                 // Only update tracking if we've consistently detected this person
                 if (this.consecutiveDetections >= this.minConsecutiveFrames) {
-                    this.updateBodyPositions(pose.keypoints);
-                    this.drawSkeleton(pose.keypoints);
-                    this.lastValidPose = pose.keypoints;
+                    this.updateBodyPositions(bestPose.keypoints);
+                    this.drawSkeletonOptimized(bestPose.keypoints); // Optimized drawing
+                    this.lastValidPose = bestPose.keypoints;
                     this.noDetectionFrames = 0;
                     
-                    // Debug logging every 30 frames (roughly once per second)
-                    if (Math.random() < 0.033) {
+                    // Debug logging every 60 frames (roughly once every 2 seconds) to reduce spam
+                    if (Math.random() < 0.017) {
                         console.log('Body tracking active:', {
                             bodyX: window.bodyX?.toFixed(0),
-                            shoulderX: window.shoulderX?.toFixed(0),
-                            consecutiveDetections: this.consecutiveDetections
+                            consecutiveDetections: this.consecutiveDetections,
+                            proximityScore: bestScore.toFixed(2),
+                            totalPeople: poses.length
                         });
                     }
                 }
-                
             } else {
-                // No valid person detected
-                this.consecutiveDetections = 0;
-                this.noDetectionFrames++;
-                
-                // Debug logging for detection failures
-                if (this.noDetectionFrames === 5) { // Log once when we start losing detection
-                    console.log('Body tracking lost person, frames without detection:', this.noDetectionFrames);
-                }
-                
-                // Clear tracking data if no valid person for too long
-                if (this.noDetectionFrames >= this.maxNoDetectionFrames) {
-                    window.bodyX = null;
-                    window.shoulderX = null;
-                    window.hipX = null;
-                    window.handX = null;
-                    this.lastValidPose = null;
-                    
-                    if (this.noDetectionFrames === this.maxNoDetectionFrames) { // Log once when clearing
-                        console.log('Body tracking cleared due to prolonged detection failure');
-                    }
-                }
+                this.handleNoDetection();
             }
 
         } catch (error) {
             console.error('Pose detection error:', error);
         }
 
-        // Reduce detection frequency for better performance - detect every 2 frames instead of every frame
+        this.scheduleNextDetection();
+    }
+
+    // Separate method to handle no detection cases
+    handleNoDetection() {
+        this.consecutiveDetections = 0;
+        this.noDetectionFrames++;
+        
+        // Debug logging for detection failures (less frequent)
+        if (this.noDetectionFrames === 10) { // Log once when we start losing detection
+            console.log('Body tracking lost person, frames without detection:', this.noDetectionFrames);
+        }
+        
+        // Clear tracking data if no valid person for too long
+        if (this.noDetectionFrames >= this.maxNoDetectionFrames) {
+            window.bodyX = null;
+            window.shoulderX = null;
+            window.hipX = null;
+            window.handX = null;
+            this.lastValidPose = null;
+            
+            if (this.noDetectionFrames === this.maxNoDetectionFrames) { // Log once when clearing
+                console.log('Body tracking cleared due to prolonged detection failure');
+            }
+        }
+    }
+
+    // Separate method to schedule next detection with adaptive timing
+    scheduleNextDetection() {
+        // Adaptive frame rate based on detection status
+        let delay = 50; // Default ~20fps
+        
+        if (this.noDetectionFrames > 5) {
+            // Slow down when no person detected to save CPU
+            delay = 80; // ~12fps
+        } else if (window.bodyX !== null) {
+            // Speed up when actively tracking
+            delay = 40; // ~25fps
+        }
+        
         setTimeout(() => {
             requestAnimationFrame(() => this.detectPose());
-        }, 33); // ~30fps instead of 20fps for better responsiveness
+        }, delay);
     }
 
     // Check if the detected person is the same as previously tracked person
@@ -223,143 +258,179 @@ class SimpleBodyTracker {
         return true; // Default to same person if we can't compare
     }
 
-    // Determine if this is the closest person to the camera
+    // Determine if this is the closest person to the camera (enhanced filtering)
     isClosestPersonToCamera(keypoints) {
         const getKeypoint = (name) => keypoints.find(kp => kp.part === name);
         
-        // Get core keypoints for validation
-        const nose = getKeypoint('nose');
-        const leftShoulder = getKeypoint('leftShoulder');
-        const rightShoulder = getKeypoint('rightShoulder');
-        const leftHip = getKeypoint('leftHip');
-        const rightHip = getKeypoint('rightHip');
-        
-        // Relaxed confidence threshold for better detection
-        const minConfidence = 0.3; // Lowered from 0.5
-        
-        // Must have at least 2 core body parts with decent confidence (relaxed from 3)
-        const highConfidencePoints = [nose, leftShoulder, rightShoulder, leftHip, rightHip]
-            .filter(point => point && point.score > minConfidence);
-        
-        if (highConfidencePoints.length < 2) {
-            return false;
+        // Higher confidence threshold to filter out distant people
+        const averageConfidence = keypoints.reduce((sum, kp) => sum + kp.score, 0) / keypoints.length;
+        if (averageConfidence < 0.4) {
+            return false; // Increased from 0.25 to 0.4
         }
         
-        // Check if person has detectable shoulders (most reliable indicator)
+        // Get essential keypoints for validation
+        const leftShoulder = getKeypoint('leftShoulder');
+        const rightShoulder = getKeypoint('rightShoulder');
+        const nose = getKeypoint('nose');
+        const leftWrist = getKeypoint('leftWrist');
+        const rightWrist = getKeypoint('rightWrist');
+        
+        // Higher minimum confidence for detection
+        const minConfidence = 0.45; // Increased from 0.3 to 0.45
+        
+        // Primary check: both shoulders must be very clear
         if (leftShoulder && rightShoulder && 
             leftShoulder.score > minConfidence && rightShoulder.score > minConfidence) {
             
-            const shoulderCenterX = (leftShoulder.position.x + rightShoulder.position.x) / 2;
-            const videoWidth = 257;
-            const centerRatio = shoulderCenterX / videoWidth; // 0 to 1
-            
-            // More permissive centering (relaxed from 0.25-0.75 to 0.15-0.85)
-            if (centerRatio < 0.15 || centerRatio > 0.85) {
-                return false;
-            }
-            
-            // Shoulder distance indicates closeness to camera (relaxed threshold)
+            // Stricter shoulder distance check (closest person has larger shoulder span)
             const shoulderDistance = Math.abs(leftShoulder.position.x - rightShoulder.position.x);
-            
-            // More permissive distance check (lowered from 40 to 25)
-            if (shoulderDistance < 25) {
-                return false;
+            if (shoulderDistance < 35) { // Increased from 25 to 35
+                return false; // Person too far away
             }
             
-            // More permissive Y position check (relaxed range)
+            // Enhanced body size validation using head-to-shoulder distance
+            if (nose && nose.score > minConfidence) {
+                const headToShoulderY = Math.abs(nose.position.y - 
+                    ((leftShoulder.position.y + rightShoulder.position.y) / 2));
+                if (headToShoulderY < 15) { // Too small body proportions
+                    return false;
+                }
+            }
+            
+            // Stricter centering check - person must be more centered
+            const shoulderCenterX = (leftShoulder.position.x + rightShoulder.position.x) / 2;
+            const videoWidth = 193;
+            const centerRatio = shoulderCenterX / videoWidth;
+            
+            if (centerRatio < 0.25 || centerRatio > 0.75) { // Tightened from 0.15-0.85
+                return false; // Must be more centered
+            }
+            
+            // Enhanced Y position validation
             const shoulderY = (leftShoulder.position.y + rightShoulder.position.y) / 2;
-            if (shoulderY < 20 || shoulderY > 170) { // More permissive range
+            if (shoulderY < 25 || shoulderY > 120) { // Tightened range
                 return false;
             }
-        } else {
-            // If no good shoulders, check for at least a nose or one shoulder
-            const hasValidDetection = (nose && nose.score > minConfidence) || 
-                                    (leftShoulder && leftShoulder.score > minConfidence) ||
-                                    (rightShoulder && rightShoulder.score > minConfidence);
             
-            if (!hasValidDetection) {
+            // Additional validation: check if hands are visible (closer person more likely to have hands detected)
+            let handBonus = 0;
+            if (leftWrist && leftWrist.score > 0.3) handBonus++;
+            if (rightWrist && rightWrist.score > 0.3) handBonus++;
+            
+            // Require at least decent overall body detection
+            const keyBodyParts = ['nose', 'leftShoulder', 'rightShoulder'];
+            const detectedKeyParts = keyBodyParts.filter(part => {
+                const kp = getKeypoint(part);
+                return kp && kp.score > minConfidence;
+            }).length;
+            
+            if (detectedKeyParts < 2) { // Need at least 2 key body parts clearly visible
                 return false;
+            }
+            
+            return true; // Valid close person detection
+        }
+        
+        // Much stricter fallback: only accept nose if it's very confident and well-positioned
+        if (nose && nose.score > 0.6) { // Much higher threshold for nose-only detection
+            if (nose.position.x > 50 && nose.position.x < 143 && // Tighter center area
+                nose.position.y > 25 && nose.position.y < 80) {  // Higher position requirement
+                return true;
             }
         }
         
-        // More permissive overall confidence check (lowered from 0.35 to 0.25)
-        const averageConfidence = keypoints.reduce((sum, kp) => sum + kp.score, 0) / keypoints.length;
-        if (averageConfidence < 0.25) {
-            return false;
+        // Additional fallback: single shoulder with high confidence
+        const goodShoulder = (leftShoulder && leftShoulder.score > 0.4) || 
+                           (rightShoulder && rightShoulder.score > 0.4);
+        
+        return goodShoulder;
+    }
+
+    // Calculate a proximity score to determine the closest person
+    calculateProximityScore(keypoints) {
+        const getKeypoint = (name) => keypoints.find(kp => kp.part === name);
+        
+        let score = 0;
+        
+        // Get key body parts
+        const leftShoulder = getKeypoint('leftShoulder');
+        const rightShoulder = getKeypoint('rightShoulder');
+        const nose = getKeypoint('nose');
+        const leftWrist = getKeypoint('leftWrist');
+        const rightWrist = getKeypoint('rightWrist');
+        
+        // Shoulder distance (wider = closer)
+        if (leftShoulder && rightShoulder && 
+            leftShoulder.score > 0.4 && rightShoulder.score > 0.4) {
+            const shoulderDistance = Math.abs(leftShoulder.position.x - rightShoulder.position.x);
+            score += shoulderDistance * 2; // Weight shoulder distance heavily
+            
+            // Bonus for being centered
+            const shoulderCenterX = (leftShoulder.position.x + rightShoulder.position.x) / 2;
+            const centerNess = 1 - Math.abs(shoulderCenterX - 96.5) / 96.5; // 96.5 is half of 193
+            score += centerNess * 30;
         }
         
-        return true;
+        // Head visibility bonus
+        if (nose && nose.score > 0.4) {
+            score += nose.score * 20;
+        }
+        
+        // Hand visibility bonus (closer people more likely to have hands visible)
+        if (leftWrist && leftWrist.score > 0.3) score += 10;
+        if (rightWrist && rightWrist.score > 0.3) score += 10;
+        
+        // Overall confidence bonus
+        const avgConfidence = keypoints.reduce((sum, kp) => sum + kp.score, 0) / keypoints.length;
+        score += avgConfidence * 25;
+        
+        return score;
     }
 
     updateBodyPositions(keypoints) {
         const screenWidth = window.innerWidth;
-        const videoWidth = 257; // Updated to match new video resolution
+        const videoWidth = 193; // Updated to new resolution
         
         // Find keypoints by name
         const getKeypoint = (name) => keypoints.find(kp => kp.part === name);
         
         const leftShoulder = getKeypoint('leftShoulder');
         const rightShoulder = getKeypoint('rightShoulder');
-        const leftHip = getKeypoint('leftHip');
-        const rightHip = getKeypoint('rightHip');
         const leftWrist = getKeypoint('leftWrist');
         const rightWrist = getKeypoint('rightWrist');
 
-        // LEAN DIRECTION DETECTION (not position-based)
-        // Bowl moves based on LEAN DIRECTION, not body position
-        
-        // OPTION 1: Direct shoulder center position tracking (FIXED DIRECTION + SMOOTHING)
-        // This is the most reliable and fastest method
-        
+        // Primary tracking: shoulder center (most reliable)
         if (leftShoulder && rightShoulder && 
             leftShoulder.score > 0.3 && rightShoulder.score > 0.3) {
             
             // Calculate center point between shoulders
             const shoulderCenterX = (leftShoulder.position.x + rightShoulder.position.x) / 2;
             
-            // Convert to screen coordinates WITHOUT MIRRORING (since video is already mirrored)
+            // Convert to screen coordinates
             const rawPosition = (shoulderCenterX / videoWidth) * screenWidth;
             
-            // Apply bounds with some padding
+            // Apply bounds with padding
             const clampedPosition = Math.max(150, Math.min(screenWidth - 150, rawPosition));
             
-            // Advanced smoothing for smoother bowl movement
+            // Apply smoothing
             const smoothedPosition = this.applySmoothMovement(clampedPosition);
             
             window.bodyX = smoothedPosition;
             window.shoulderX = window.bodyX;
+            
+            return; // Exit early if we have good shoulder tracking
         }
         
-        // Fallback: Hand position (if shoulders not detected)
-        if ((!window.bodyX || window.bodyX === null) && 
-            (rightWrist && rightWrist.score > 0.3)) {
-            const handPosition = ((videoWidth - rightWrist.position.x) / videoWidth) * screenWidth;
+        // Fallback: Hand position (simplified)
+        const bestWrist = (rightWrist && rightWrist.score > 0.3) ? rightWrist : 
+                         (leftWrist && leftWrist.score > 0.3) ? leftWrist : null;
+        
+        if (bestWrist && (!window.bodyX || window.bodyX === null)) {
+            const handPosition = ((videoWidth - bestWrist.position.x) / videoWidth) * screenWidth;
             const clampedHandPosition = Math.max(50, Math.min(screenWidth - 50, handPosition));
             
             window.handX = clampedHandPosition;
-            // Use hand position as bodyX if no shoulder detection
-            if (!window.bodyX) {
-                window.bodyX = clampedHandPosition;
-            }
-        } else if ((!window.bodyX || window.bodyX === null) && 
-                   (leftWrist && leftWrist.score > 0.3)) {
-            const handPosition = ((videoWidth - leftWrist.position.x) / videoWidth) * screenWidth;
-            const clampedHandPosition = Math.max(50, Math.min(screenWidth - 50, handPosition));
-            
-            window.handX = clampedHandPosition;
-            // Use hand position as bodyX if no shoulder detection
-            if (!window.bodyX) {
-                window.bodyX = clampedHandPosition;
-            }
-        }
-
-        // Debug logging (increased frequency for troubleshooting)
-        if (window.bodyX && Math.random() < 0.1) {
-            const leftShoulder = getKeypoint('leftShoulder');
-            const rightShoulder = getKeypoint('rightShoulder');
-            if (leftShoulder && rightShoulder) {
-                const shoulderTilt = rightShoulder.position.y - leftShoulder.position.y;
-            }
+            window.bodyX = clampedHandPosition; // Use as bodyX if no shoulder tracking
         }
     }
 
@@ -408,16 +479,27 @@ class SimpleBodyTracker {
         return finalPosition;
     }
 
-    // Draw skeleton overlay on the debug video
-    drawSkeleton(keypoints) {
-        if (!this.skeletonCtx || !this.skeletonCanvas) return;
+    // Optimized skeleton drawing (only when debug is enabled)
+    drawSkeletonOptimized(keypoints) {
+        // Skip drawing if debug video is not visible (major performance boost)
+        if (!this.skeletonCtx || !this.skeletonCanvas || 
+            this.skeletonCanvas.style.display === 'none') {
+            return;
+        }
+        
+        // Only draw every 3rd frame to reduce CPU usage
+        if (!this.drawCounter) this.drawCounter = 0;
+        this.drawCounter++;
+        if (this.drawCounter % 3 !== 0) {
+            return;
+        }
         
         // Clear previous frame
         this.skeletonCtx.clearRect(0, 0, this.skeletonCanvas.width, this.skeletonCanvas.height);
         
         // Scale factors to match canvas size to video resolution
-        const scaleX = this.skeletonCanvas.width / 257; // 257 is video width
-        const scaleY = this.skeletonCanvas.height / 193; // 193 is video height
+        const scaleX = this.skeletonCanvas.width / 193; // Updated resolution
+        const scaleY = this.skeletonCanvas.height / 145; // Updated resolution
         
         // Helper function to get keypoint by name
         const getKeypoint = (name) => keypoints.find(kp => kp.part === name);
@@ -426,28 +508,23 @@ class SimpleBodyTracker {
         const mirrorX = (x) => this.skeletonCanvas.width - (x * scaleX);
         const scaleYCoord = (y) => y * scaleY;
         
-        // Define skeleton connections (PoseNet body parts) - ONLY shoulder to head movement
-        const connections = [
-            // Head and neck
-            ['nose', 'leftEye'],
-            ['nose', 'rightEye'],
-            ['leftEye', 'leftEar'],
-            ['rightEye', 'rightEar'],
-            
-            // Shoulders only (for lean detection)
-            ['leftShoulder', 'rightShoulder']
+        // Only draw essential connections for performance
+        const essentialConnections = [
+            ['leftShoulder', 'rightShoulder'], // Shoulder line (main tracking indicator)
+            ['nose', 'leftShoulder'],
+            ['nose', 'rightShoulder']
         ];
         
-        // Draw connections (lines between keypoints)
-        this.skeletonCtx.strokeStyle = '#00FF00'; // Green lines
+        // Draw connections (simplified)
+        this.skeletonCtx.strokeStyle = '#00FF00';
         this.skeletonCtx.lineWidth = 2;
         this.skeletonCtx.beginPath();
         
-        connections.forEach(([startName, endName]) => {
+        essentialConnections.forEach(([startName, endName]) => {
             const startPoint = getKeypoint(startName);
             const endPoint = getKeypoint(endName);
             
-            if (startPoint && endPoint && startPoint.score > 0.15 && endPoint.score > 0.15) {
+            if (startPoint && endPoint && startPoint.score > 0.3 && endPoint.score > 0.3) {
                 const startX = mirrorX(startPoint.position.x);
                 const startY = scaleYCoord(startPoint.position.y);
                 const endX = mirrorX(endPoint.position.x);
@@ -460,43 +537,21 @@ class SimpleBodyTracker {
         
         this.skeletonCtx.stroke();
         
-        // Draw keypoints (circles at joints)
-        keypoints.forEach(keypoint => {
-            if (keypoint.score > 0.15) {
-                const x = mirrorX(keypoint.position.x);
-                const y = scaleYCoord(keypoint.position.y);
-                
-                // Different colors for different confidence levels
-                if (keypoint.score > 0.5) {
-                    this.skeletonCtx.fillStyle = '#FF0000'; // Red for high confidence
-                } else if (keypoint.score > 0.3) {
-                    this.skeletonCtx.fillStyle = '#FFFF00'; // Yellow for medium confidence
-                } else {
-                    this.skeletonCtx.fillStyle = '#FFA500'; // Orange for low confidence
-                }
-                
-                this.skeletonCtx.beginPath();
-                this.skeletonCtx.arc(x, y, 3, 0, 2 * Math.PI);
-                this.skeletonCtx.fill();
-            }
-        });
+        // Draw only key points (nose, shoulders)
+        const keyPoints = [
+            getKeypoint('nose'),
+            getKeypoint('leftShoulder'), 
+            getKeypoint('rightShoulder')
+        ].filter(point => point && point.score > 0.3);
         
-        // Highlight shoulder points used for leaning detection
-        const leftShoulder = getKeypoint('leftShoulder');
-        const rightShoulder = getKeypoint('rightShoulder');
-        
-        [leftShoulder, rightShoulder].forEach(point => {
-            if (point && point.score > 0.15) {
-                const x = mirrorX(point.position.x);
-                const y = scaleYCoord(point.position.y);
-                
-                // Draw larger circle for lean detection points
-                this.skeletonCtx.strokeStyle = '#00FFFF'; // Cyan outline
-                this.skeletonCtx.lineWidth = 2;
-                this.skeletonCtx.beginPath();
-                this.skeletonCtx.arc(x, y, 6, 0, 2 * Math.PI);
-                this.skeletonCtx.stroke();
-            }
+        keyPoints.forEach(keypoint => {
+            const x = mirrorX(keypoint.position.x);
+            const y = scaleYCoord(keypoint.position.y);
+            
+            this.skeletonCtx.fillStyle = keypoint.score > 0.5 ? '#FF0000' : '#FFFF00';
+            this.skeletonCtx.beginPath();
+            this.skeletonCtx.arc(x, y, 4, 0, 2 * Math.PI);
+            this.skeletonCtx.fill();
         });
     }
 
