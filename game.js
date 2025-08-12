@@ -392,8 +392,8 @@ function spawnItem() {
     const frame = texture.getSourceImage ? texture.getSourceImage() : null;
     const itemWidth = frame ? frame.width * 0.2 : 100 * 0.2; // 0.2 is your scale
     
-    // Add 10% padding from screen edges to avoid spawning too close to edges
-    const screenPadding = this.cameras.main.width * 0.1; // 10% of screen width
+    // Add 15% padding from screen edges to avoid spawning too close to edges (increased from 10%)
+    const screenPadding = this.cameras.main.width * 0.15; // 15% of screen width (was 10%)
     const minX = screenPadding + (itemWidth / 2);
     const maxX = this.cameras.main.width - screenPadding - (itemWidth / 2);
     

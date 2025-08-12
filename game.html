@@ -81,7 +81,7 @@
     </div>
 
     <div id="gameContainer">
-       <img class="logo-top" src="assets/dutch/logo.webp" alt="">
+       <img id="logoToggle" class="logo-top" src="assets/dutch/logo.webp" alt="" style="cursor: pointer;" onclick="toggleDebugCamera()">
     </div>
 
     <script>
@@ -126,6 +126,16 @@
           }, 500);
         }
       }, 8000); // 8 second fallback
+      
+      // Function to toggle debug camera and skeleton visibility
+      function toggleDebugCamera() {
+        if (window.simpleBodyTracker && window.simpleBodyTracker.toggleDebugVideo) {
+          window.simpleBodyTracker.toggleDebugVideo();
+          console.log('Debug camera toggled');
+        } else {
+          console.log('Body tracker not initialized yet');
+        }
+      }
     </script>
     
     <script src="simpleBodyTracking.js"></script>
