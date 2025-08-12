@@ -487,14 +487,14 @@ class SimpleBodyTracker {
             return;
         }
         
-        // Only draw every 3rd frame to reduce CPU usage
+        // Only draw every 5th frame to reduce CPU usage (increased from 3 for better performance)
         if (!this.drawCounter) this.drawCounter = 0;
         this.drawCounter++;
-        if (this.drawCounter % 3 !== 0) {
+        if (this.drawCounter % 5 !== 0) {
             return;
         }
         
-        // Clear previous frame
+        // Clear previous frame efficiently
         this.skeletonCtx.clearRect(0, 0, this.skeletonCanvas.width, this.skeletonCanvas.height);
         
         // Scale factors to match canvas size to video resolution
@@ -508,51 +508,76 @@ class SimpleBodyTracker {
         const mirrorX = (x) => this.skeletonCanvas.width - (x * scaleX);
         const scaleYCoord = (y) => y * scaleY;
         
-        // Only draw essential connections for performance
-        const essentialConnections = [
-            ['leftShoulder', 'rightShoulder'], // Shoulder line (main tracking indicator)
-            ['nose', 'leftShoulder'],
-            ['nose', 'rightShoulder']
-        ];
+        // Get all required points for triangle
+        const leftShoulder = getKeypoint('leftShoulder');
+        const rightShoulder = getKeypoint('rightShoulder');
+        const nose = getKeypoint('nose');
         
-        // Draw connections (simplified)
-        this.skeletonCtx.strokeStyle = '#00FF00';
-        this.skeletonCtx.lineWidth = 2;
-        this.skeletonCtx.beginPath();
+        // Only draw if we have all points for a proper triangle with good confidence
+        const hasGoodTriangle = leftShoulder && rightShoulder && nose &&
+                               leftShoulder.score > 0.35 && rightShoulder.score > 0.35 && nose.score > 0.35;
         
-        essentialConnections.forEach(([startName, endName]) => {
-            const startPoint = getKeypoint(startName);
-            const endPoint = getKeypoint(endName);
-            
-            if (startPoint && endPoint && startPoint.score > 0.3 && endPoint.score > 0.3) {
-                const startX = mirrorX(startPoint.position.x);
-                const startY = scaleYCoord(startPoint.position.y);
-                const endX = mirrorX(endPoint.position.x);
-                const endY = scaleYCoord(endPoint.position.y);
-                
-                this.skeletonCtx.moveTo(startX, startY);
-                this.skeletonCtx.lineTo(endX, endY);
-            }
-        });
-        
-        this.skeletonCtx.stroke();
-        
-        // Draw only key points (nose, shoulders)
-        const keyPoints = [
-            getKeypoint('nose'),
-            getKeypoint('leftShoulder'), 
-            getKeypoint('rightShoulder')
-        ].filter(point => point && point.score > 0.3);
-        
-        keyPoints.forEach(keypoint => {
-            const x = mirrorX(keypoint.position.x);
-            const y = scaleYCoord(keypoint.position.y);
-            
-            this.skeletonCtx.fillStyle = keypoint.score > 0.5 ? '#FF0000' : '#FFFF00';
+        if (hasGoodTriangle) {
+            // Draw triangle connections
+            this.skeletonCtx.strokeStyle = '#00FF00';
+            this.skeletonCtx.lineWidth = 2;
             this.skeletonCtx.beginPath();
-            this.skeletonCtx.arc(x, y, 4, 0, 2 * Math.PI);
+            
+            const leftX = mirrorX(leftShoulder.position.x);
+            const leftY = scaleYCoord(leftShoulder.position.y);
+            const rightX = mirrorX(rightShoulder.position.x);
+            const rightY = scaleYCoord(rightShoulder.position.y);
+            const noseX = mirrorX(nose.position.x);
+            const noseY = scaleYCoord(nose.position.y);
+            
+            // Draw triangle: nose to left shoulder to right shoulder back to nose
+            this.skeletonCtx.moveTo(noseX, noseY);
+            this.skeletonCtx.lineTo(leftX, leftY);
+            this.skeletonCtx.lineTo(rightX, rightY);
+            this.skeletonCtx.lineTo(noseX, noseY);
+            this.skeletonCtx.stroke();
+            
+            // Draw the three points of the triangle
+            this.skeletonCtx.fillStyle = '#FF0000'; // Red for shoulders
+            this.skeletonCtx.beginPath();
+            this.skeletonCtx.arc(leftX, leftY, 4, 0, 2 * Math.PI);
             this.skeletonCtx.fill();
-        });
+            
+            this.skeletonCtx.beginPath();
+            this.skeletonCtx.arc(rightX, rightY, 4, 0, 2 * Math.PI);
+            this.skeletonCtx.fill();
+            
+            this.skeletonCtx.fillStyle = '#00FFFF'; // Cyan for nose
+            this.skeletonCtx.beginPath();
+            this.skeletonCtx.arc(noseX, noseY, 4, 0, 2 * Math.PI);
+            this.skeletonCtx.fill();
+        } else {
+            // Fallback: just draw shoulder line if triangle is not complete
+            if (leftShoulder && rightShoulder && leftShoulder.score > 0.27 && rightShoulder.score > 0.27) {
+                this.skeletonCtx.strokeStyle = '#FFAA00'; // Orange for incomplete detection
+                this.skeletonCtx.lineWidth = 2;
+                this.skeletonCtx.beginPath();
+                
+                const leftX = mirrorX(leftShoulder.position.x);
+                const leftY = scaleYCoord(leftShoulder.position.y);
+                const rightX = mirrorX(rightShoulder.position.x);
+                const rightY = scaleYCoord(rightShoulder.position.y);
+                
+                this.skeletonCtx.moveTo(leftX, leftY);
+                this.skeletonCtx.lineTo(rightX, rightY);
+                this.skeletonCtx.stroke();
+                
+                // Draw shoulder points
+                this.skeletonCtx.fillStyle = '#FFAA00';
+                this.skeletonCtx.beginPath();
+                this.skeletonCtx.arc(leftX, leftY, 3, 0, 2 * Math.PI);
+                this.skeletonCtx.fill();
+                
+                this.skeletonCtx.beginPath();
+                this.skeletonCtx.arc(rightX, rightY, 3, 0, 2 * Math.PI);
+                this.skeletonCtx.fill();
+            }
+        }
     }
 
     // Toggle debug video visibility
