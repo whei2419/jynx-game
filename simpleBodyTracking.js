@@ -15,8 +15,8 @@ class SimpleBodyTracker {
         
         // Add smoothing variables for better movement
         this.smoothingBuffer = [];
-        this.bufferSize = 4; // Number of frames to average (reduced from 5 for 10% more sensitivity)
-        this.velocitySmoothing = 0.135; // How much to smooth velocity changes (reduced from 0.15 for 10% more responsiveness)
+        this.bufferSize = 2; // Number of frames to average (reduced from 3 for 10% more sensitivity)
+        this.velocitySmoothing = 0.11; // How much to smooth velocity changes (reduced from 0.12 for 10% more responsiveness)
         this.lastVelocity = 0;
         
         // Person persistence tracking
@@ -401,7 +401,7 @@ class SimpleBodyTracker {
 
         // Primary tracking: shoulder center (most reliable)
         if (leftShoulder && rightShoulder && 
-            leftShoulder.score > 0.27 && rightShoulder.score > 0.27) { // Reduced from 0.3 for 10% more sensitivity
+            leftShoulder.score > 0.27 && rightShoulder.score > 0.27) { // Reverted back from 0.24 to 0.27
             
             // Calculate center point between shoulders
             const shoulderCenterX = (leftShoulder.position.x + rightShoulder.position.x) / 2;
@@ -423,7 +423,7 @@ class SimpleBodyTracker {
         
         // Fallback: Hand position (simplified)
         const bestWrist = (rightWrist && rightWrist.score > 0.27) ? rightWrist : 
-                         (leftWrist && leftWrist.score > 0.27) ? leftWrist : null; // Reduced from 0.3 for 10% more sensitivity
+                         (leftWrist && leftWrist.score > 0.27) ? leftWrist : null; // Reverted back from 0.24 to 0.27
         
         if (bestWrist && (!window.bodyX || window.bodyX === null)) {
             const handPosition = ((videoWidth - bestWrist.position.x) / videoWidth) * screenWidth;
@@ -553,7 +553,7 @@ class SimpleBodyTracker {
             this.skeletonCtx.fill();
         } else {
             // Fallback: just draw shoulder line if triangle is not complete
-            if (leftShoulder && rightShoulder && leftShoulder.score > 0.27 && rightShoulder.score > 0.27) {
+            if (leftShoulder && rightShoulder && leftShoulder.score > 0.27 && rightShoulder.score > 0.27) { // Reverted back from 0.24 to 0.27
                 this.skeletonCtx.strokeStyle = '#FFAA00'; // Orange for incomplete detection
                 this.skeletonCtx.lineWidth = 2;
                 this.skeletonCtx.beginPath();
