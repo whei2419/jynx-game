@@ -15,8 +15,8 @@ class SimpleBodyTracker {
         
         // Add smoothing variables for better movement
         this.smoothingBuffer = [];
-        this.bufferSize = 5; // Number of frames to average
-        this.velocitySmoothing = 0.15; // How much to smooth velocity changes
+        this.bufferSize = 4; // Number of frames to average (reduced from 5 for 10% more sensitivity)
+        this.velocitySmoothing = 0.135; // How much to smooth velocity changes (reduced from 0.15 for 10% more responsiveness)
         this.lastVelocity = 0;
         
         // Person persistence tracking
@@ -401,7 +401,7 @@ class SimpleBodyTracker {
 
         // Primary tracking: shoulder center (most reliable)
         if (leftShoulder && rightShoulder && 
-            leftShoulder.score > 0.3 && rightShoulder.score > 0.3) {
+            leftShoulder.score > 0.27 && rightShoulder.score > 0.27) { // Reduced from 0.3 for 10% more sensitivity
             
             // Calculate center point between shoulders
             const shoulderCenterX = (leftShoulder.position.x + rightShoulder.position.x) / 2;
@@ -422,8 +422,8 @@ class SimpleBodyTracker {
         }
         
         // Fallback: Hand position (simplified)
-        const bestWrist = (rightWrist && rightWrist.score > 0.3) ? rightWrist : 
-                         (leftWrist && leftWrist.score > 0.3) ? leftWrist : null;
+        const bestWrist = (rightWrist && rightWrist.score > 0.27) ? rightWrist : 
+                         (leftWrist && leftWrist.score > 0.27) ? leftWrist : null; // Reduced from 0.3 for 10% more sensitivity
         
         if (bestWrist && (!window.bodyX || window.bodyX === null)) {
             const handPosition = ((videoWidth - bestWrist.position.x) / videoWidth) * screenWidth;
