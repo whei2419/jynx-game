@@ -127,15 +127,58 @@
         }
       }, 8000); // 8 second fallback
       
-      // Function to toggle debug camera and skeleton visibility
+      // Function to toggle debug camera and skeleton visibility with localStorage persistence
       function toggleDebugCamera() {
         if (window.simpleBodyTracker && window.simpleBodyTracker.toggleDebugVideo) {
+          // Toggle the camera
           window.simpleBodyTracker.toggleDebugVideo();
-          console.log('Debug camera toggled');
+          
+          // Get current state and store opposite in localStorage
+          const isVisible = window.simpleBodyTracker.video && 
+                           window.simpleBodyTracker.video.style.display !== 'none';
+          
+          localStorage.setItem('debugCameraVisible', isVisible.toString());
+          console.log('Debug camera toggled. State saved:', isVisible);
         } else {
           console.log('Body tracker not initialized yet');
         }
       }
+      
+      // Function to restore debug camera state from localStorage on page load
+      function restoreDebugCameraState() {
+        const savedState = localStorage.getItem('debugCameraVisible');
+        
+        if (savedState === 'true') {
+          // Camera should be visible, make sure it's shown
+          if (window.simpleBodyTracker && window.simpleBodyTracker.video) {
+            if (window.simpleBodyTracker.video.style.display === 'none') {
+              window.simpleBodyTracker.toggleDebugVideo();
+            }
+            console.log('Debug camera restored to visible state');
+          }
+        } else {
+          // Camera should be hidden (default state or explicitly saved as false)
+          if (window.simpleBodyTracker && window.simpleBodyTracker.video) {
+            if (window.simpleBodyTracker.video.style.display !== 'none') {
+              window.simpleBodyTracker.toggleDebugVideo();
+            }
+            console.log('Debug camera restored to hidden state');
+          }
+        }
+      }
+      
+      // Check and restore camera state when body tracker is initialized
+      function checkBodyTrackerAndRestore() {
+        if (window.simpleBodyTracker && window.simpleBodyTracker.isInitialized) {
+          restoreDebugCameraState();
+        } else {
+          // Try again in 500ms if not initialized yet
+          setTimeout(checkBodyTrackerAndRestore, 500);
+        }
+      }
+      
+      // Start checking for body tracker initialization
+      setTimeout(checkBodyTrackerAndRestore, 1000);
     </script>
     
     <script src="simpleBodyTracking.js"></script>
