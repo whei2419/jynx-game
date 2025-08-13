@@ -1,5 +1,13 @@
-// Simple Body Tracking using TensorFlow PoseNet
+// Shoulder-to-Head Body Tracking using TensorFlow PoseNet
 // This is ONLY for the game page - other pages use hand tracking
+// 
+// UPDATED: Now focuses specifically on shoulder-to-head movement for bowl control
+// - Primary tracking uses weighted combination of shoulder center (60%) and head position (40%)
+// - OPTIMIZED FOR WIDE BODY MOVEMENTS: Reduced confidence thresholds and increased movement tolerance
+// - Provides more natural and intuitive control by tracking upper torso movement
+// - Falls back to shoulder-only or head-only tracking when needed
+// - Maintains hand tracking as final fallback option
+// - Enhanced smoothing that adapts to rapid movement speeds
 
 class SimpleBodyTracker {
     constructor() {
@@ -7,24 +15,25 @@ class SimpleBodyTracker {
         this.video = null;
         this.isInitialized = false;
         
-        // Initialize global variables for BODY tracking (not hand tracking)
+        // Initialize global variables for SHOULDER-TO-HEAD tracking (optimized for bowl control)
         window.bodyX = null;
         window.shoulderX = null;
-        window.hipX = null;
-        window.handX = null; // Still track hands as fallback for body tracking
+        window.headX = null;
+        window.shoulderToHeadX = null; // Main tracking variable for bowl movement
+        window.handX = null; // Keep as fallback
         
-        // Add smoothing variables for better movement
+        // Add smoothing variables for better movement (optimized for wide movements)
         this.smoothingBuffer = [];
-        this.bufferSize = 2; // Number of frames to average (reduced from 3 for 10% more sensitivity)
-        this.velocitySmoothing = 0.11; // How much to smooth velocity changes (reduced from 0.12 for 10% more responsiveness)
+        this.bufferSize = 2; // Keep small for responsiveness to wide movements
+        this.velocitySmoothing = 0.15; // Increased from 0.11 for better responsiveness to wide movements
         this.lastVelocity = 0;
         
-        // Person persistence tracking
+        // Person persistence tracking - reduced for better responsiveness to wide movements
         this.consecutiveDetections = 0;
-        this.minConsecutiveFrames = 2; // Reduced from 3 to 2 for faster response
+        this.minConsecutiveFrames = 1; // Reduced from 2 to 1 for faster response to wide movements
         this.lastValidPose = null;
         this.noDetectionFrames = 0;
-        this.maxNoDetectionFrames = 15; // Increased from 10 to 15 for more stability
+        this.maxNoDetectionFrames = 10; // Reduced from 15 to 10 for faster recovery
     }
 
     async initialize() {
@@ -160,8 +169,10 @@ class SimpleBodyTracker {
                     
                     // Debug logging every 60 frames (roughly once every 2 seconds) to reduce spam
                     if (Math.random() < 0.017) {
-                        console.log('Body tracking active:', {
-                            bodyX: window.bodyX?.toFixed(0),
+                        console.log('Shoulder-to-head tracking active:', {
+                            shoulderToHeadX: window.shoulderToHeadX?.toFixed(0),
+                            headX: window.headX?.toFixed(0),
+                            shoulderX: window.shoulderX?.toFixed(0),
                             consecutiveDetections: this.consecutiveDetections,
                             proximityScore: bestScore.toFixed(2),
                             totalPeople: poses.length
@@ -193,7 +204,8 @@ class SimpleBodyTracker {
         if (this.noDetectionFrames >= this.maxNoDetectionFrames) {
             window.bodyX = null;
             window.shoulderX = null;
-            window.hipX = null;
+            window.headX = null;
+            window.shoulderToHeadX = null;
             window.handX = null;
             this.lastValidPose = null;
             
@@ -203,17 +215,17 @@ class SimpleBodyTracker {
         }
     }
 
-    // Separate method to schedule next detection with adaptive timing
+    // Separate method to schedule next detection with adaptive timing (optimized for wide movements)
     scheduleNextDetection() {
-        // Adaptive frame rate based on detection status
-        let delay = 50; // Default ~20fps
+        // More aggressive frame rates for better wide movement tracking
+        let delay = 35; // Increased from 50 to ~28fps
         
         if (this.noDetectionFrames > 5) {
-            // Slow down when no person detected to save CPU
-            delay = 80; // ~12fps
+            // Faster recovery when no person detected
+            delay = 60; // Reduced from 80 to ~16fps
         } else if (window.bodyX !== null) {
-            // Speed up when actively tracking
-            delay = 40; // ~25fps
+            // Much faster when actively tracking for wide movements
+            delay = 25; // Reduced from 40 to ~40fps
         }
         
         setTimeout(() => {
@@ -251,65 +263,83 @@ class SimpleBodyTracker {
                 Math.pow(currentCenter.y - lastCenter.y, 2)
             );
             
-            // If person moved too much, it might be a different person
-            return distance < 50; // Threshold for "same person"
+            // Allow for much larger movements to support wide body movement tracking
+            // Increased threshold significantly to handle side-to-side movements
+            return distance < 120; // Increased from 50 to 120 for wide body movements
         }
         
         return true; // Default to same person if we can't compare
     }
 
-    // Determine if this is the closest person to the camera (enhanced filtering)
+    // Determine if this is the closest person to the camera (enhanced for shoulder-to-head tracking)
     isClosestPersonToCamera(keypoints) {
         const getKeypoint = (name) => keypoints.find(kp => kp.part === name);
         
-        // Higher confidence threshold to filter out distant people
+        // More permissive confidence threshold to maintain tracking during wide movements
         const averageConfidence = keypoints.reduce((sum, kp) => sum + kp.score, 0) / keypoints.length;
-        if (averageConfidence < 0.4) {
-            return false; // Increased from 0.25 to 0.4
+        if (averageConfidence < 0.3) { // Reduced from 0.4 to 0.3 for better wide movement tracking
+            return false;
         }
         
-        // Get essential keypoints for validation
+        // Get essential keypoints for shoulder-to-head tracking
         const leftShoulder = getKeypoint('leftShoulder');
         const rightShoulder = getKeypoint('rightShoulder');
         const nose = getKeypoint('nose');
+        const leftEye = getKeypoint('leftEye');
+        const rightEye = getKeypoint('rightEye');
         const leftWrist = getKeypoint('leftWrist');
         const rightWrist = getKeypoint('rightWrist');
         
         // Higher minimum confidence for detection
-        const minConfidence = 0.45; // Increased from 0.3 to 0.45
+        const minConfidence = 0.35; // Reduced from 0.45 to 0.35 for better tracking during wide movements
         
-        // Primary check: both shoulders must be very clear
+        // Primary check: both shoulders must be very clear (essential for shoulder-to-head tracking)
         if (leftShoulder && rightShoulder && 
             leftShoulder.score > minConfidence && rightShoulder.score > minConfidence) {
             
             // More flexible shoulder distance check for different user sizes
             const shoulderDistance = Math.abs(leftShoulder.position.x - rightShoulder.position.x);
-            if (shoulderDistance < 25) { // Reduced back to 25 for shorter users
+            if (shoulderDistance < 20) { // Reduced from 25 to 20 for closer/smaller users
                 return false; // Person too far away
             }
             
-            // Enhanced body size validation using head-to-shoulder distance
+            // Enhanced head detection validation for shoulder-to-head tracking
+            let hasGoodHead = false;
             if (nose && nose.score > minConfidence) {
                 const headToShoulderY = Math.abs(nose.position.y - 
                     ((leftShoulder.position.y + rightShoulder.position.y) / 2));
-                if (headToShoulderY < 10) { // Reduced from 15 to 10 for shorter users
-                    return false;
+                if (headToShoulderY >= 8) { // Reduced from 10 to 8 for better head detection
+                    hasGoodHead = true;
+                }
+            } else if (leftEye && rightEye && leftEye.score > 0.25 && rightEye.score > 0.25) {
+                // Alternative: use eyes if nose not available
+                const eyeCenterY = (leftEye.position.y + rightEye.position.y) / 2;
+                const headToShoulderY = Math.abs(eyeCenterY - 
+                    ((leftShoulder.position.y + rightShoulder.position.y) / 2));
+                if (headToShoulderY >= 6) { // Reduced from 8 to 6 for better eye detection
+                    hasGoodHead = true;
                 }
             }
             
-            // More flexible centering check for different heights
+            // MUCH more flexible centering check to allow wide body movements
             const shoulderCenterX = (leftShoulder.position.x + rightShoulder.position.x) / 2;
             const videoWidth = 193;
             const centerRatio = shoulderCenterX / videoWidth;
             
-            if (centerRatio < 0.2 || centerRatio > 0.8) { // More flexible than 0.25-0.75
-                return false; // Must be reasonably centered
+            // Allow the person to move across almost the entire frame width
+            if (centerRatio < 0.05 || centerRatio > 0.95) { // Much more permissive (was 0.2-0.8)
+                return false; // Only reject if they're completely off-screen
             }
             
             // Much more flexible Y position validation for different user heights
             const shoulderY = (leftShoulder.position.y + rightShoulder.position.y) / 2;
-            if (shoulderY < 15 || shoulderY > 130) { // Expanded from 25-120 to 15-130 for height flexibility
+            if (shoulderY < 10 || shoulderY > 140) { // Even more flexible (was 15-130)
                 return false;
+            }
+            
+            // Bonus for having good head detection (important for shoulder-to-head tracking)
+            if (hasGoodHead) {
+                return true; // Excellent detection for shoulder-to-head tracking
             }
             
             // Additional validation: check if hands are visible (closer person more likely to have hands detected)
@@ -331,24 +361,24 @@ class SimpleBodyTracker {
             return true; // Valid close person detection
         }
         
-        // More flexible fallback: only accept nose if it's confident and reasonably positioned
-        if (nose && nose.score > 0.5) { // Keep high threshold for nose-only detection
-            if (nose.position.x > 40 && nose.position.x < 153 && // More flexible center area for different heights
-                nose.position.y > 15 && nose.position.y < 100) {  // More flexible position for shorter users
+        // Much more flexible fallback: accept nose across wider range for wide body movements
+        if (nose && nose.score > 0.4) { // Reduced from 0.5 for better tracking during wide movements
+            if (nose.position.x > 10 && nose.position.x < 183 && // Much wider range (was 40-153)
+                nose.position.y > 10 && nose.position.y < 110) {  // More flexible Y range
                 return true;
             }
         }
         
-        // Enhanced fallback: single shoulder with good confidence for shorter users
-        const goodLeftShoulder = leftShoulder && leftShoulder.score > 0.35; // Reduced from 0.4
-        const goodRightShoulder = rightShoulder && rightShoulder.score > 0.35; // Reduced from 0.4
+        // Enhanced fallback: single shoulder with good confidence - very permissive for wide movements
+        const goodLeftShoulder = leftShoulder && leftShoulder.score > 0.25; // Further reduced from 0.35
+        const goodRightShoulder = rightShoulder && rightShoulder.score > 0.25; // Further reduced from 0.35
         
-        // If we have at least one good shoulder, allow it for shorter users
+        // If we have at least one good shoulder, allow it across much wider range
         if (goodLeftShoulder || goodRightShoulder) {
             const shoulder = goodLeftShoulder ? leftShoulder : rightShoulder;
-            // Check if shoulder is in reasonable position for shorter users
-            if (shoulder.position.x > 30 && shoulder.position.x < 163 && 
-                shoulder.position.y > 10 && shoulder.position.y < 135) {
+            // Much more permissive position check for wide body movements
+            if (shoulder.position.x > 5 && shoulder.position.x < 188 && // Much wider X range (was 30-163)
+                shoulder.position.y > 5 && shoulder.position.y < 140) { // Wider Y range (was 10-135)
                 return true;
             }
         }
@@ -356,34 +386,49 @@ class SimpleBodyTracker {
         return false;
     }
 
-    // Calculate a proximity score to determine the closest person
+    // Calculate a proximity score to determine the closest person (optimized for shoulder-to-head tracking)
     calculateProximityScore(keypoints) {
         const getKeypoint = (name) => keypoints.find(kp => kp.part === name);
         
         let score = 0;
         
-        // Get key body parts
+        // Get key body parts for shoulder-to-head tracking
         const leftShoulder = getKeypoint('leftShoulder');
         const rightShoulder = getKeypoint('rightShoulder');
         const nose = getKeypoint('nose');
+        const leftEye = getKeypoint('leftEye');
+        const rightEye = getKeypoint('rightEye');
         const leftWrist = getKeypoint('leftWrist');
         const rightWrist = getKeypoint('rightWrist');
         
-        // Shoulder distance (wider = closer)
+        // Shoulder distance (wider = closer) - heavily weighted for shoulder-to-head tracking
         if (leftShoulder && rightShoulder && 
             leftShoulder.score > 0.4 && rightShoulder.score > 0.4) {
             const shoulderDistance = Math.abs(leftShoulder.position.x - rightShoulder.position.x);
-            score += shoulderDistance * 2; // Weight shoulder distance heavily
+            score += shoulderDistance * 3; // Increased weight for shoulders
             
             // Bonus for being centered
             const shoulderCenterX = (leftShoulder.position.x + rightShoulder.position.x) / 2;
             const centerNess = 1 - Math.abs(shoulderCenterX - 96.5) / 96.5; // 96.5 is half of 193
-            score += centerNess * 30;
+            score += centerNess * 35; // Increased centering bonus
         }
         
-        // Head visibility bonus
+        // Head visibility bonus - heavily weighted for shoulder-to-head tracking
         if (nose && nose.score > 0.4) {
-            score += nose.score * 20;
+            score += nose.score * 30; // Increased from 20 to 30
+            
+            // Additional bonus if nose is well-positioned relative to shoulders
+            if (leftShoulder && rightShoulder) {
+                const shoulderCenterY = (leftShoulder.position.y + rightShoulder.position.y) / 2;
+                const headToShoulderDistance = Math.abs(nose.position.y - shoulderCenterY);
+                if (headToShoulderDistance > 10 && headToShoulderDistance < 50) {
+                    score += 20; // Good head-to-shoulder positioning
+                }
+            }
+        } else if (leftEye && rightEye && leftEye.score > 0.3 && rightEye.score > 0.3) {
+            // Alternative head tracking using eyes
+            const eyeScore = (leftEye.score + rightEye.score) / 2;
+            score += eyeScore * 25; // Good alternative to nose
         }
         
         // Hand visibility bonus (closer people more likely to have hands visible)
@@ -393,6 +438,16 @@ class SimpleBodyTracker {
         // Overall confidence bonus
         const avgConfidence = keypoints.reduce((sum, kp) => sum + kp.score, 0) / keypoints.length;
         score += avgConfidence * 25;
+        
+        // Special bonus for having both good shoulders AND good head (ideal for shoulder-to-head tracking)
+        const hasGoodShoulders = leftShoulder && rightShoulder && 
+                                leftShoulder.score > 0.4 && rightShoulder.score > 0.4;
+        const hasGoodHead = (nose && nose.score > 0.4) || 
+                           (leftEye && rightEye && leftEye.score > 0.3 && rightEye.score > 0.3);
+        
+        if (hasGoodShoulders && hasGoodHead) {
+            score += 50; // Big bonus for ideal shoulder-to-head tracking setup
+        }
         
         return score;
     }
@@ -406,45 +461,95 @@ class SimpleBodyTracker {
         
         const leftShoulder = getKeypoint('leftShoulder');
         const rightShoulder = getKeypoint('rightShoulder');
+        const nose = getKeypoint('nose');
+        const leftEye = getKeypoint('leftEye');
+        const rightEye = getKeypoint('rightEye');
         const leftWrist = getKeypoint('leftWrist');
         const rightWrist = getKeypoint('rightWrist');
 
-        // Primary tracking: shoulder center (most reliable)
+        // Primary tracking: Shoulder-to-head center calculation
+        let shoulderCenterX = null;
+        let headCenterX = null;
+        let shoulderToHeadX = null;
+
+        // Calculate shoulder center position (more permissive for wide movements)
         if (leftShoulder && rightShoulder && 
-            leftShoulder.score > 0.27 && rightShoulder.score > 0.27) { // Reverted back from 0.24 to 0.27
-            
-            // Calculate center point between shoulders
-            const shoulderCenterX = (leftShoulder.position.x + rightShoulder.position.x) / 2;
+            leftShoulder.score > 0.22 && rightShoulder.score > 0.22) { // Reduced from 0.27
+            shoulderCenterX = (leftShoulder.position.x + rightShoulder.position.x) / 2;
+        }
+
+        // Calculate head center position (more permissive for wide movements)
+        if (nose && nose.score > 0.25) { // Reduced from 0.3
+            headCenterX = nose.position.x;
+        } else if (leftEye && rightEye && leftEye.score > 0.20 && rightEye.score > 0.20) { // Reduced from 0.25
+            headCenterX = (leftEye.position.x + rightEye.position.x) / 2;
+        } else if (leftEye && leftEye.score > 0.25) { // Reduced from 0.3
+            headCenterX = leftEye.position.x;
+        } else if (rightEye && rightEye.score > 0.25) { // Reduced from 0.3
+            headCenterX = rightEye.position.x;
+        }
+
+        // Calculate shoulder-to-head center for bowl control
+        if (shoulderCenterX !== null && headCenterX !== null) {
+            // Weight the calculation: 60% shoulder, 40% head for stable movement
+            shoulderToHeadX = (shoulderCenterX * 0.6) + (headCenterX * 0.4);
             
             // Convert to screen coordinates
-            const rawPosition = (shoulderCenterX / videoWidth) * screenWidth;
+            const rawPosition = (shoulderToHeadX / videoWidth) * screenWidth;
             
-            // Apply bounds with padding
-            const clampedPosition = Math.max(150, Math.min(screenWidth - 150, rawPosition));
+            // Much more permissive bounds to allow wide body movements
+            const clampedPosition = Math.max(50, Math.min(screenWidth - 50, rawPosition)); // Reduced from 150 to 50
             
             // Apply smoothing
             const smoothedPosition = this.applySmoothMovement(clampedPosition);
             
-            window.bodyX = smoothedPosition;
-            window.shoulderX = window.bodyX;
+            // Set all tracking variables
+            window.shoulderToHeadX = smoothedPosition;
+            window.bodyX = smoothedPosition; // Primary control variable
+            window.shoulderX = (shoulderCenterX / videoWidth) * screenWidth;
+            window.headX = (headCenterX / videoWidth) * screenWidth;
             
-            return; // Exit early if we have good shoulder tracking
+            return; // Exit early if we have good shoulder-to-head tracking
         }
         
-        // Fallback: Hand position (simplified)
-        const bestWrist = (rightWrist && rightWrist.score > 0.27) ? rightWrist : 
-                         (leftWrist && leftWrist.score > 0.27) ? leftWrist : null; // Reverted back from 0.24 to 0.27
+        // Fallback 1: Shoulder only tracking
+        if (shoulderCenterX !== null) {
+            const rawPosition = (shoulderCenterX / videoWidth) * screenWidth;
+            const clampedPosition = Math.max(50, Math.min(screenWidth - 50, rawPosition)); // More permissive
+            const smoothedPosition = this.applySmoothMovement(clampedPosition);
+            
+            window.shoulderX = smoothedPosition;
+            window.bodyX = smoothedPosition;
+            
+            return;
+        }
+        
+        // Fallback 2: Head only tracking
+        if (headCenterX !== null) {
+            const rawPosition = (headCenterX / videoWidth) * screenWidth;
+            const clampedPosition = Math.max(50, Math.min(screenWidth - 50, rawPosition)); // More permissive
+            const smoothedPosition = this.applySmoothMovement(clampedPosition);
+            
+            window.headX = smoothedPosition;
+            window.bodyX = smoothedPosition;
+            
+            return;
+        }
+        
+        // Fallback 3: Hand position (legacy support) - more permissive for wide movements
+        const bestWrist = (rightWrist && rightWrist.score > 0.22) ? rightWrist : 
+                         (leftWrist && leftWrist.score > 0.22) ? leftWrist : null; // Reduced from 0.27
         
         if (bestWrist && (!window.bodyX || window.bodyX === null)) {
             const handPosition = ((videoWidth - bestWrist.position.x) / videoWidth) * screenWidth;
-            const clampedHandPosition = Math.max(50, Math.min(screenWidth - 50, handPosition));
+            const clampedHandPosition = Math.max(25, Math.min(screenWidth - 25, handPosition)); // More permissive (was 50)
             
             window.handX = clampedHandPosition;
-            window.bodyX = clampedHandPosition; // Use as bodyX if no shoulder tracking
+            window.bodyX = clampedHandPosition; // Use as bodyX if no shoulder/head tracking
         }
     }
 
-    // Advanced smoothing for smoother bowl movement
+    // Advanced smoothing for smoother bowl movement (optimized for wide body movements)
     applySmoothMovement(newPosition) {
         // Add new position to buffer
         this.smoothingBuffer.push(newPosition);
@@ -476,9 +581,18 @@ class SimpleBodyTracker {
         // Calculate velocity (change in position)
         const currentVelocity = averagePosition - window.bodyX;
         
+        // Detect rapid movements and reduce smoothing for better responsiveness
+        const rapidMovementThreshold = 50; // pixels per frame
+        const isRapidMovement = Math.abs(currentVelocity) > rapidMovementThreshold;
+        
+        // Adjust smoothing based on movement speed
+        const adaptiveSmoothing = isRapidMovement ? 
+            this.velocitySmoothing * 1.5 : // More aggressive for rapid movements
+            this.velocitySmoothing;
+        
         // Smooth the velocity to prevent jerky movements
-        const smoothedVelocity = this.lastVelocity * (1 - this.velocitySmoothing) + 
-                                currentVelocity * this.velocitySmoothing;
+        const smoothedVelocity = this.lastVelocity * (1 - adaptiveSmoothing) + 
+                                currentVelocity * adaptiveSmoothing;
         
         // Apply the smoothed velocity to get the final position
         const finalPosition = window.bodyX + smoothedVelocity;
@@ -547,6 +661,28 @@ class SimpleBodyTracker {
             this.skeletonCtx.lineTo(noseX, noseY);
             this.skeletonCtx.stroke();
             
+            // Calculate and draw the shoulder-to-head control center
+            const shoulderCenterX = (leftX + rightX) / 2;
+            const shoulderCenterY = (leftY + rightY) / 2;
+            const controlCenterX = (shoulderCenterX * 0.6) + (noseX * 0.4);
+            const controlCenterY = (shoulderCenterY * 0.6) + (noseY * 0.4);
+            
+            // Draw control center as a larger yellow circle
+            this.skeletonCtx.fillStyle = '#FFFF00'; // Yellow for control center
+            this.skeletonCtx.beginPath();
+            this.skeletonCtx.arc(controlCenterX, controlCenterY, 6, 0, 2 * Math.PI);
+            this.skeletonCtx.fill();
+            
+            // Draw lines from shoulders to control center
+            this.skeletonCtx.strokeStyle = '#FFFF00';
+            this.skeletonCtx.lineWidth = 1;
+            this.skeletonCtx.setLineDash([3, 3]); // Dashed line
+            this.skeletonCtx.beginPath();
+            this.skeletonCtx.moveTo(shoulderCenterX, shoulderCenterY);
+            this.skeletonCtx.lineTo(controlCenterX, controlCenterY);
+            this.skeletonCtx.stroke();
+            this.skeletonCtx.setLineDash([]); // Reset to solid line
+            
             // Draw the three points of the triangle
             this.skeletonCtx.fillStyle = '#FF0000'; // Red for shoulders
             this.skeletonCtx.beginPath();
@@ -557,7 +693,7 @@ class SimpleBodyTracker {
             this.skeletonCtx.arc(rightX, rightY, 4, 0, 2 * Math.PI);
             this.skeletonCtx.fill();
             
-            this.skeletonCtx.fillStyle = '#00FFFF'; // Cyan for nose
+            this.skeletonCtx.fillStyle = '#00FFFF'; // Cyan for nose/head
             this.skeletonCtx.beginPath();
             this.skeletonCtx.arc(noseX, noseY, 4, 0, 2 * Math.PI);
             this.skeletonCtx.fill();

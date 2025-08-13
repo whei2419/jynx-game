@@ -307,17 +307,20 @@ function create() {
 }
 
 function update() {
-    // Control bowl with body tracking if available
-    // You can use different body parts for control:
-    // window.bodyX - overall body center
-    // window.shoulderX - shoulder position
-    // window.hipX - hip position
-    // window.handX - hand position (original)
+    // Control bowl with shoulder-to-head tracking for precise movement
+    // Priority order for control:
+    // 1. window.shoulderToHeadX - weighted combination of shoulder and head position (primary)
+    // 2. window.bodyX - overall body center (fallback)
+    // 3. window.shoulderX - shoulder position only (fallback)
+    // 4. window.handX - hand position (legacy fallback)
     
     let controlX = null;
     
-    // Priority order: try body center first, then shoulder, then hand
-    if (typeof window.bodyX !== 'undefined' && window.bodyX !== null) {
+    // Priority order: try shoulder-to-head first, then other methods
+    if (typeof window.shoulderToHeadX !== 'undefined' && window.shoulderToHeadX !== null) {
+        controlX = window.shoulderToHeadX;
+        // console.log('Using shoulderToHeadX:', controlX);
+    } else if (typeof window.bodyX !== 'undefined' && window.bodyX !== null) {
         controlX = window.bodyX;
         // console.log('Using bodyX:', controlX);
     } else if (typeof window.shoulderX !== 'undefined' && window.shoulderX !== null) {
@@ -345,7 +348,7 @@ function update() {
     } else {
         // Reduce debug frequency to avoid console spam
         if (Math.random() < 0.01) { // Only 1% of the time
-            console.log('No tracking data available. bodyX:', window.bodyX, 'shoulderX:', window.shoulderX, 'handX:', window.handX);
+            console.log('No tracking data available. shoulderToHeadX:', window.shoulderToHeadX, 'bodyX:', window.bodyX, 'shoulderX:', window.shoulderX, 'handX:', window.handX);
         }
     }
 
