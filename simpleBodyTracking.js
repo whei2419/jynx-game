@@ -6,8 +6,21 @@ class SimpleBodyTracker {
         this.net = null;
         this.video = null;
         this.isInitialized = false;
+              // Higher confidence threshold to filter out distant people
+        const averageConfidence = keypoints.reduce((sum, kp) => sum + kp.score, 0) / keypoints.length;
+        if (averageConfidence < 0.35) { // Reduced from 0.4 to 0.35 for shorter users
+            return false; // Person too far or unclear
+        }
         
-        // Initialize global variables for BODY tracking (not hand tracking)
+        // Get essential keypoints for validation
+        const leftShoulder = getKeypoint('leftShoulder');
+        const rightShoulder = getKeypoint('rightShoulder');
+        const nose = getKeypoint('nose');
+        const leftWrist = getKeypoint('leftWrist');
+        const rightWrist = getKeypoint('rightWrist');
+        
+        // Adaptive minimum confidence based on user detection
+        const minConfidence = 0.4; // Reduced from 0.45 to 0.4 for better height accommodationInitialize global variables for BODY tracking (not hand tracking)
         window.bodyX = null;
         window.shoulderX = null;
         window.hipX = null;
@@ -282,9 +295,9 @@ class SimpleBodyTracker {
         if (leftShoulder && rightShoulder && 
             leftShoulder.score > minConfidence && rightShoulder.score > minConfidence) {
             
-            // Stricter shoulder distance check (closest person has larger shoulder span)
+            // More flexible shoulder distance check for different user sizes
             const shoulderDistance = Math.abs(leftShoulder.position.x - rightShoulder.position.x);
-            if (shoulderDistance < 35) { // Increased from 25 to 35
+            if (shoulderDistance < 25) { // Reduced back to 25 for shorter users
                 return false; // Person too far away
             }
             
@@ -292,23 +305,23 @@ class SimpleBodyTracker {
             if (nose && nose.score > minConfidence) {
                 const headToShoulderY = Math.abs(nose.position.y - 
                     ((leftShoulder.position.y + rightShoulder.position.y) / 2));
-                if (headToShoulderY < 15) { // Too small body proportions
+                if (headToShoulderY < 10) { // Reduced from 15 to 10 for shorter users
                     return false;
                 }
             }
             
-            // Stricter centering check - person must be more centered
+            // More flexible centering check for different heights
             const shoulderCenterX = (leftShoulder.position.x + rightShoulder.position.x) / 2;
             const videoWidth = 193;
             const centerRatio = shoulderCenterX / videoWidth;
             
-            if (centerRatio < 0.25 || centerRatio > 0.75) { // Tightened from 0.15-0.85
-                return false; // Must be more centered
+            if (centerRatio < 0.2 || centerRatio > 0.8) { // More flexible than 0.25-0.75
+                return false; // Must be reasonably centered
             }
             
-            // Enhanced Y position validation
+            // Much more flexible Y position validation for different user heights
             const shoulderY = (leftShoulder.position.y + rightShoulder.position.y) / 2;
-            if (shoulderY < 25 || shoulderY > 120) { // Tightened range
+            if (shoulderY < 15 || shoulderY > 130) { // Expanded from 25-120 to 15-130 for height flexibility
                 return false;
             }
             
@@ -331,19 +344,29 @@ class SimpleBodyTracker {
             return true; // Valid close person detection
         }
         
-        // Much stricter fallback: only accept nose if it's very confident and well-positioned
-        if (nose && nose.score > 0.6) { // Much higher threshold for nose-only detection
-            if (nose.position.x > 50 && nose.position.x < 143 && // Tighter center area
-                nose.position.y > 25 && nose.position.y < 80) {  // Higher position requirement
+        // More flexible fallback: only accept nose if it's confident and reasonably positioned
+        if (nose && nose.score > 0.5) { // Keep high threshold for nose-only detection
+            if (nose.position.x > 40 && nose.position.x < 153 && // More flexible center area for different heights
+                nose.position.y > 15 && nose.position.y < 100) {  // More flexible position for shorter users
                 return true;
             }
         }
         
-        // Additional fallback: single shoulder with high confidence
-        const goodShoulder = (leftShoulder && leftShoulder.score > 0.4) || 
-                           (rightShoulder && rightShoulder.score > 0.4);
+        // Enhanced fallback: single shoulder with good confidence for shorter users
+        const goodLeftShoulder = leftShoulder && leftShoulder.score > 0.35; // Reduced from 0.4
+        const goodRightShoulder = rightShoulder && rightShoulder.score > 0.35; // Reduced from 0.4
         
-        return goodShoulder;
+        // If we have at least one good shoulder, allow it for shorter users
+        if (goodLeftShoulder || goodRightShoulder) {
+            const shoulder = goodLeftShoulder ? leftShoulder : rightShoulder;
+            // Check if shoulder is in reasonable position for shorter users
+            if (shoulder.position.x > 30 && shoulder.position.x < 163 && 
+                shoulder.position.y > 10 && shoulder.position.y < 135) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     // Calculate a proximity score to determine the closest person
