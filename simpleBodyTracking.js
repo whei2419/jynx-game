@@ -6,21 +6,8 @@ class SimpleBodyTracker {
         this.net = null;
         this.video = null;
         this.isInitialized = false;
-              // Higher confidence threshold to filter out distant people
-        const averageConfidence = keypoints.reduce((sum, kp) => sum + kp.score, 0) / keypoints.length;
-        if (averageConfidence < 0.35) { // Reduced from 0.4 to 0.35 for shorter users
-            return false; // Person too far or unclear
-        }
         
-        // Get essential keypoints for validation
-        const leftShoulder = getKeypoint('leftShoulder');
-        const rightShoulder = getKeypoint('rightShoulder');
-        const nose = getKeypoint('nose');
-        const leftWrist = getKeypoint('leftWrist');
-        const rightWrist = getKeypoint('rightWrist');
-        
-        // Adaptive minimum confidence based on user detection
-        const minConfidence = 0.4; // Reduced from 0.45 to 0.4 for better height accommodationInitialize global variables for BODY tracking (not hand tracking)
+        // Initialize global variables for BODY tracking (not hand tracking)
         window.bodyX = null;
         window.shoulderX = null;
         window.hipX = null;
