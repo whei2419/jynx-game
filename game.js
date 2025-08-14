@@ -405,7 +405,7 @@ function catchItem(bowlContainer, item) {
         const scorePopup = this.add.text(splashX, splashY, points > 0 ? `+${points}` : `${points}`, {
             fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec',
             fontSize: '40px',
-            color: '#063591', // Dark blue color for visibility
+            color: points > 0 ? '#063591' : '#FF0000', // Original dark blue for positive points, red for negative points
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(102);
 
