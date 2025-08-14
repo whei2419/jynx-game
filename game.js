@@ -55,14 +55,12 @@ function preload() {
     
     // Load good objects from folder and parse points from filename
     this.goodObjects = [
-        { key: 'goodObject_1_1', path: 'assets/dutch/fallingObjects/1 point (1).webp', points: 1 },
-        { key: 'goodObject_1_2', path: 'assets/dutch/fallingObjects/1 point (2).webp', points: 1 },
-        { key: 'goodObject_1_3', path: 'assets/dutch/fallingObjects/1 point (3).webp', points: 1 },
-        { key: 'goodObject_1_4', path: 'assets/dutch/fallingObjects/1 point (4).webp', points: 1 },
-        { key: 'goodObject_1_5', path: 'assets/dutch/fallingObjects/1 point (5).webp', points: 1 },
-        { key: 'goodObject_1_6', path: 'assets/dutch/fallingObjects/1 point (6).webp', points: 1 },
-        { key: 'goodObject_7_1', path: 'assets/dutch/fallingObjects/7 point (1).webp', points: 7 },
-        { key: 'goodObject_7_2', path: 'assets/dutch/fallingObjects/7 point (2).webp', points: 7 },
+        { key: 'goodObject_1_1', path: 'assets/dutch/fallingObjects/Game_FSStation_Bone.webp', points: 2 },
+        { key: 'goodObject_1_2', path: 'assets/dutch/fallingObjects/Game_FSStation_Bone.webp', points: 2 },
+        { key: 'goodObject_1_3', path: 'assets/dutch/fallingObjects/Game_FSStation_Pro.webp', points: 2 },
+        { key: 'goodObject_1_4', path: 'assets/dutch/fallingObjects/Game_FSStation_VitD.webp', points: -2 },
+        { key: 'goodObject_7_1', path: 'assets/dutch/fallingObjects/7 point (1).webp', points: 6 },
+        { key: 'goodObject_7_2', path: 'assets/dutch/fallingObjects/7 point (2).webp', points: 6 },
     ];
 
     this.goodObjects.forEach(obj => {
@@ -404,7 +402,7 @@ function catchItem(bowlContainer, item) {
         const splashY = item.y;
 
         const milkSplash = this.add.image(splashX, splashY, 'milkSplash').setOrigin(0.5).setDepth(101).setScale(0.2);
-        const scorePopup = this.add.text(splashX, splashY, `+${points}`, {
+        const scorePopup = this.add.text(splashX, splashY, points > 0 ? `+${points}` : `${points}`, {
             fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec',
             fontSize: '40px',
             color: '#063591', // Dark blue color for visibility
