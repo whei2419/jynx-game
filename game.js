@@ -56,8 +56,9 @@ function preload() {
     // Load good objects from folder and parse points from filename
     this.goodObjects = [
         { key: 'goodObject_1_1', path: 'assets/dutch/fallingObjects/Game_FSStation_Bone.webp', points: 2 },
-        { key: 'goodObject_1_2', path: 'assets/dutch/fallingObjects/Game_FSStation_Bone.webp', points: 2 },
+        { key: 'goodObject_1_2', path: 'assets/dutch/fallingObjects/Game_FSStation_Ca.webp', points: 2 },
         { key: 'goodObject_1_3', path: 'assets/dutch/fallingObjects/Game_FSStation_Pro.webp', points: 2 },
+        { key: 'goodObject_1_5', path: 'assets/dutch/fallingObjects/Game_FSStation_Arm.webp', points: 2 },
         { key: 'goodObject_1_4', path: 'assets/dutch/fallingObjects/Game_FSStation_VitD.webp', points: -2 },
         { key: 'goodObject_7_1', path: 'assets/dutch/fallingObjects/7 point (1).webp', points: 6 },
         { key: 'goodObject_7_2', path: 'assets/dutch/fallingObjects/7 point (2).webp', points: 6 },
