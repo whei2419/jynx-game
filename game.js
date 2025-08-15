@@ -56,12 +56,13 @@ function preload() {
     // Load good objects from folder and parse points from filename
     this.goodObjects = [
         { key: 'goodObject_1_1', path: 'assets/dutch/fallingObjects/Game_FSStation_Bone.webp', points: 2 },
-        { key: 'goodObject_1_2', path: 'assets/dutch/fallingObjects/Game_FSStation_Ca.webp', points: 2 },
+        { key: 'goodObject_1_2', path: 'assets/dutch/fallingObjects/Game_FSStation_Bone.webp', points: 2 },
         { key: 'goodObject_1_3', path: 'assets/dutch/fallingObjects/Game_FSStation_Pro.webp', points: 2 },
-        { key: 'goodObject_1_5', path: 'assets/dutch/fallingObjects/Game_FSStation_Arm.webp', points: 2 },
         { key: 'goodObject_1_4', path: 'assets/dutch/fallingObjects/Game_FSStation_VitD.webp', points: -2 },
         { key: 'goodObject_7_1', path: 'assets/dutch/fallingObjects/7 point (1).webp', points: 6 },
         { key: 'goodObject_7_2', path: 'assets/dutch/fallingObjects/7 point (2).webp', points: 6 },
+        // Additional copies of 7 point (2) to increase its drop rate
+        { key: 'goodObject_7_2_copy1', path: 'assets/dutch/fallingObjects/7 point (2).webp', points: 6 },
     ];
 
     this.goodObjects.forEach(obj => {
@@ -392,7 +393,11 @@ function catchItem(bowlContainer, item) {
     if (points) {
         score += points;
         this.scoreText.setText(score);
-        if (points === 7) {
+        
+        // Play appropriate sound based on point value
+        if (points < 0) {
+            this.explosionSound.play(); // Play bomb sound for negative points
+        } else if (points === 7) {
             this.collect7Sound.play();
         } else {
             this.collectSound.play();
@@ -421,17 +426,33 @@ function catchItem(bowlContainer, item) {
             }
         });
 
-        // Animate the bowl: scale up, rotate, and bounce
-        this.tweens.add({
-            targets: this.bowl,
-            scaleX: this.bowl.scaleX * 1.1, // Relative scale increase
-            scaleY: this.bowl.scaleY * 1.1, // Relative scale increase
-            rotation: 0.1,
-            yoyo: true,
-            repeat: 0,
-            duration: 200,
-            ease: 'Power1'
-        });
+        // Animate the bowl based on point value
+        if (points < 0) {
+            // Shake animation for negative points
+            this.tweens.add({
+                targets: this.bowl,
+                x: this.bowl.x + 10,
+                duration: 50,
+                yoyo: true,
+                repeat: 5,
+                ease: 'Power1'
+            });
+            
+            // Add screen shake effect for negative points
+            this.cameras.main.shake(300, 0.01); // Shake for 300ms with intensity 0.01
+        } else {
+            // Original bounce animation for positive points
+            this.tweens.add({
+                targets: this.bowl,
+                scaleX: this.bowl.scaleX * 1.1, // Relative scale increase
+                scaleY: this.bowl.scaleY * 1.1, // Relative scale increase
+                rotation: 0.1,
+                yoyo: true,
+                repeat: 0,
+                duration: 200,
+                ease: 'Power1'
+            });
+        }
 
         item.setVisible(false);
         item.body.enable = false;
