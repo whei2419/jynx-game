@@ -55,14 +55,9 @@ function preload() {
     
     // Load good objects from folder and parse points from filename
     this.goodObjects = [
-        { key: 'goodObject_1_1', path: 'assets/dutch/fallingObjects/1 point (1).webp', points: 1 },
-        { key: 'goodObject_1_2', path: 'assets/dutch/fallingObjects/1 point (2).webp', points: 1 },
-        { key: 'goodObject_1_3', path: 'assets/dutch/fallingObjects/1 point (3).webp', points: 1 },
-        { key: 'goodObject_1_4', path: 'assets/dutch/fallingObjects/1 point (4).webp', points: 1 },
-        { key: 'goodObject_1_5', path: 'assets/dutch/fallingObjects/1 point (5).webp', points: 1 },
-        { key: 'goodObject_1_6', path: 'assets/dutch/fallingObjects/1 point (6).webp', points: 1 },
-        { key: 'goodObject_7_1', path: 'assets/dutch/fallingObjects/7 point (1).webp', points: 7 },
-        { key: 'goodObject_7_2', path: 'assets/dutch/fallingObjects/7 point (2).webp', points: 7 },
+        { key: 'goodObject_1_1', path: 'assets/dutch/fallingObjects/alert-4point.webp', points: -4 },
+        { key: 'goodObject_1_2', path: 'assets/dutch/fallingObjects/coin-2point.webp', points: 2 },
+        { key: 'goodObject_1_3', path: 'assets/dutch/fallingObjects/paper-10 point.webp', points: 10 },
     ];
 
     this.goodObjects.forEach(obj => {
@@ -80,10 +75,9 @@ function preload() {
     this.load.image('red', 'assets/redtimer.png');
     this.load.image('scorebg', 'assets/scorebg-with-jar.png');
     this.load.image('bowl', 'assets/dutch/bowl.webp');
-    this.load.image('overlayTop', 'assets/dutch/overlaytop.webp');
     this.load.image('timerContainerBg', 'assets/dutch/timer.webp');
     this.load.image('scoreContainerBg', 'assets/dutch/totalscore.webp');
-    this.load.image('milkSplash', 'assets/dutch/milk splash.png');
+    this.load.image('milkSplash', 'assets/dutch/milk splash.webp');
 }
 
 function create() {
@@ -114,11 +108,6 @@ function create() {
     this.background.displayWidth = this.cameras.main.width;
     this.background.displayHeight = this.cameras.main.height;
 
-    this.overlayTop = this.add.image(0, 0, 'overlayTop').setOrigin(0, 0);
-    this.overlayTop.setScrollFactor(0);
-    this.overlayTop.scaleX = this.cameras.main.width / this.overlayTop.width;
-    this.overlayTop.scaleY = this.overlayTop.scaleX;
-    this.overlayTop.setDepth(98);
 
 
     // Set up bowl and enable physics
@@ -156,7 +145,7 @@ function create() {
     this.timerText = this.add.text(this.cameras.main.width - 490, 117, '00:20', {
         fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec', // Adjust font size here
         fontSize: '40px',
-        color: "#FFFFFF",
+        color: "blue",
         align: 'center',
         fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(100);
@@ -170,7 +159,7 @@ function create() {
     this.scoreText = this.add.text(this.cameras.main.width - 175, 117, '0', {
         fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec', // Adjust font size here
         fontSize: '40px',
-        color: "#FFFFFF",
+        color: "blue",
         align: 'center',
         fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(100);
@@ -339,7 +328,7 @@ function spawnItem() {
     // Calculate item width for safe spawn
     const texture = this.textures.get(randomItem.key);
     const frame = texture.getSourceImage ? texture.getSourceImage() : null;
-    const itemWidth = frame ? frame.width * 0.4 : 100 * 0.4; // 0.4 is your scale
+    const itemWidth = frame ? frame.width * 0.2 : 100 * 0.2; // 0.2 is your scale
     const minX = itemWidth / 2;
     const maxX = this.cameras.main.width - itemWidth / 2;
     var x = Phaser.Math.Between(minX, maxX);
@@ -350,7 +339,7 @@ function spawnItem() {
         item.setData('points', randomItem.points);
     }
     item.setOrigin(0.5);
-    item.setScale(0.4);
+    item.setScale(0.2);
     item.body.setAllowGravity(true);
     item.body.gravity.y = this.dropGravity;
     item.body.velocity.x = Phaser.Math.Between(-30, 30);
@@ -403,8 +392,8 @@ function catchItem(bowlContainer, item) {
         const splashX = item.x;
         const splashY = item.y;
 
-        const milkSplash = this.add.image(splashX, splashY, 'milkSplash').setOrigin(0.5).setDepth(101).setScale(0.2);
-        const scorePopup = this.add.text(splashX, splashY, `+${points}`, {
+        const milkSplash = this.add.image(splashX, splashY, 'milkSplash').setOrigin(0.5).setDepth(101).setScale(0.1);
+        const scorePopup = this.add.text(splashX, splashY, points > 0 ? `+${points}` : `${points}`, {
             fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec',
             fontSize: '40px',
             color: '#063591', // Dark blue color for visibility
