@@ -77,6 +77,7 @@ function preload() {
     this.load.image('bowl', 'assets/dutch/bowl.webp');
     this.load.image('timerContainerBg', 'assets/dutch/timer.webp');
     this.load.image('scoreContainerBg', 'assets/dutch/totalscore.webp');
+    this.load.image('milkSplash', 'assets/dutch/milk splash.webp');
 }
 
 function create() {
@@ -391,7 +392,7 @@ function catchItem(bowlContainer, item) {
         const splashX = item.x;
         const splashY = item.y;
 
-      
+        const milkSplash = this.add.image(splashX, splashY, 'milkSplash').setOrigin(0.5).setDepth(101).setScale(0.1);
         const scorePopup = this.add.text(splashX, splashY, points > 0 ? `+${points}` : `${points}`, {
             fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec',
             fontSize: '40px',
@@ -400,11 +401,12 @@ function catchItem(bowlContainer, item) {
         }).setOrigin(0.5).setDepth(102);
 
         this.tweens.add({
-            targets: [scorePopup],
+            targets: [milkSplash, scorePopup],
             alpha: 0,
             duration: 800, // 0.8 seconds fade out
             ease: 'Power1',
             onComplete: () => {
+                milkSplash.destroy();
                 scorePopup.destroy();
             }
         });
