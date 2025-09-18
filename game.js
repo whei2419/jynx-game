@@ -144,11 +144,10 @@ function create() {
 
     // Adjust the X and Y values below to position the timer text
     this.timerText = this.add.text(this.cameras.main.width - 490, 117, '00:20', {
-        fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec', // Adjust font size here
+        fontFamily: 'Fraunces, HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec', // Adjust font size here
         fontSize: '40px',
         color: "blue",
-        align: 'center',
-        fontStyle: 'bold'
+        align: 'center'
     }).setOrigin(0.5).setDepth(100);
 
     this.scoreContainerBg = this.add.image(this.cameras.main.width - 170, 100, 'scoreContainerBg').setOrigin(0.5).setDepth(99);
@@ -158,12 +157,11 @@ function create() {
     this.physics.add.existing(this.scoreContainerBg, true);
 
     // Adjust the X and Y values below to position the score text
-    this.scoreText = this.add.text(this.cameras.main.width - 175, 117, '0', {
-        fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec', // Adjust font size here
+    this.scoreText = this.add.text(this.cameras.main.width - 135, 117, 'RM0', {
+        fontFamily: 'Fraunces, HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec', // Adjust font size here
         fontSize: '40px',
         color: "blue",
-        align: 'center',
-        fontStyle: 'bold'
+        align: 'center'
     }).setOrigin(0.5).setDepth(100);
 
     // Countdown text in the center
@@ -198,7 +196,7 @@ function create() {
     });
     // Countdown text styled and above background
     this.countdownText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, '3', {
-        fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec',
+        fontFamily: 'Fraunces, HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec',
         fontSize: '200px',
         color: "#063591",
         fontStyle: 'bold'
@@ -383,7 +381,7 @@ function catchItem(bowlContainer, item) {
 
     if (points) {
         score += points;
-        this.scoreText.setText(score);
+        this.scoreText.setText(`RM${score}`);
         if (points === 7) {
             this.collect7Sound.play();
         } else {
@@ -395,7 +393,7 @@ function catchItem(bowlContainer, item) {
         const splashY = item.y;
 
         const scorePopup = this.add.text(splashX, splashY, points > 0 ? `+${points}` : `${points}`, {
-            fontFamily: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec',
+            fontFamily: 'Fraunces, HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec',
             fontSize: '40px',
             color: '#063591', // Dark blue color for visibility
             fontStyle: 'bold'
