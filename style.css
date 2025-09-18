@@ -24,7 +24,7 @@ html, body {
   }
 
   body, #gameContainer, canvas {
-    cursor: url('./assets/dutch/cursor.png') 16 16, url('assets/dutch/cursor.png') 16 16, pointer !important;
+    cursor: none !important;
     font-family: 'HelveticaCustom', Arial, Helvetica, sans-serif;
 }
 
