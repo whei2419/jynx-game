@@ -3,6 +3,11 @@
     src: url('assets/font/HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec.otf') format('opentype'); 
 }
 
+@font-face {
+    font-family: 'Fraunces';
+    src: url('assets/font/fraunces.ttf') format('truetype');
+}
+
 html, body {
     margin: 0;
     padding: 0;
@@ -33,7 +38,7 @@ button {
               color 0.18s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   cursor: pointer;
-  font-family: 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec', Arial, Helvetica, sans-serif;
+  font-family: 'Fraunces', 'HvDTrial_Brevia-ExtraBlack-BF6493a4064f0ec', Arial, Helvetica, sans-serif;
   font-size: 1.1em;
   border: 10px solid #ffffff;
   border-radius: 12px;
